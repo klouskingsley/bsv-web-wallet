@@ -6,5 +6,8 @@ module.exports = {
     path: path.resolve(__dirname, "dist"),
     filename: "public-api.js",
   },
-  devtool: "inline-source-map",
 };
+
+if (process.env.NODE_ENV !== "production") {
+  module.exports.devtool = "source-map";
+}

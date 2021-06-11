@@ -47,7 +47,7 @@ export function generateKeysFromEmailPassword(email: string, pass: string, netwo
     const hex = bsv.crypto.Hash.sha256(Buffer.from(bufferS.toString('hex'))).toString('hex')
     
     const privateKey = new bsv.PrivateKey(hex, network)
-    const address = privateKey.toAddress(network)
+    const address = privateKey.toAddress(network).toString()
     
     return {
         address,

@@ -8,6 +8,7 @@
 
 import createPostMsg from "post-msg";
 import createEmitter from "on-emit";
+import { getSiteMetadata } from "./src/lib/dom";
 
 // createOpener: postMsg:on:ready -> postMsg:post:ready -> postMsg:on:func-xxx -> postMsg:post:func-xxx
 // 流程
@@ -41,6 +42,47 @@ function Bsv({ pageUrl = "http://localhost:3000/tic-tac-toe" } = {}) {
     return iframe;
   };
 
+  const outEmitter = createEmitter();
+
+  const openPopupAndRequest = async function (method, params) {
+    const id = uuid();
+    const requestId = uuid();
+    const hashdata = {
+      type: "popup",
+      id,
+      data: {
+        type: "request",
+        data: {
+          method: method,
+          requestId,
+          params,
+        },
+      },
+    };
+    const url = `${pageUrl}#${stringifyHash(hashdata)}`;
+    const popWidth = 450;
+    const popHeight = 700;
+    const popTop = Math.round((window.innerHeight - popHeight) / 2);
+    const popLeft = Math.round((window.innerWidth - popWidth) / 2);
+    const targetWindow = window.open(
+      url,
+      "webWalletPopup",
+      `width=${popWidth}, height=${popHeight}, left=${popLeft}, top=${popTop}, resizable,scrollbars,status`
+    );
+    const postMsg = createPostMsg(targetWindow, "*");
+    return new Promise((resolve, reject) => {
+      postMsg.on(id, (_, eventData) => {
+        const { type, data } = eventData;
+        if (type === "response" && data.requestId === requestId) {
+          if (!targetWindow.closed) {
+            targetWindow.close();
+          }
+          data.error ? reject(data.error) : resolve(data.response);
+        }
+      });
+    });
+  };
+
   const _createBackIframe = function () {
     const hashdata = {
       type: "iframe",
@@ -52,9 +94,6 @@ function Bsv({ pageUrl = "http://localhost:3000/tic-tac-toe" } = {}) {
 
     const targetWindow = iframe.contentWindow;
     const postMsg = createPostMsg(targetWindow, "*");
-    function log(type, data, origin, source) {
-      console.log(type, data, origin, source);
-    }
     postMsg.on(`${hashdata.id}`, (type, data, origin) => {
       console.log("type", type, data, origin);
     });
@@ -99,19 +138,29 @@ function Bsv({ pageUrl = "http://localhost:3000/tic-tac-toe" } = {}) {
 
   let backIframe = _createBackIframe();
 
-  const outEmitter = createEmitter();
   const requestAccount = async function () {
     // 授权成功 resolve 账户信息
     // 授权失败 reject 错误信息
     // 账户信息, 资产余额 变更时，调用 outEmitter
+    // 获取当前页面 title, avatar
+    const siteMeta = await getSiteMetadata();
+    return openPopupAndRequest("requestAccount", siteMeta);
   };
-  const transferBsv = function () {
+  const transferBsv = function ({ receivers }) {
     // 交易成功 resolve  获取资产余额 是否变更
     // 交易失败 reject
+    return openPopupAndRequest("transferBsv", {
+      receivers,
+    });
   };
-  const transferSensibleFt = function () {
+  const transferSensibleFt = function ({ receivers, codehash, genesis }) {
     // 交易成功 resolve  获取资产余额 是否变更
     // 交易失败 reject
+    return openPopupAndRequest("transferSensibleFt", {
+      receivers,
+      codehash,
+      genesis,
+    });
   };
 
   return {
@@ -125,4 +174,6 @@ function Bsv({ pageUrl = "http://localhost:3000/tic-tac-toe" } = {}) {
   };
 }
 
-window.xxx = Bsv();
+module.exports = {
+  bsv: Bsv(),
+};

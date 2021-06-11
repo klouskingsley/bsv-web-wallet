@@ -30,6 +30,7 @@
   },
   "scripts": {
     "watch": "webpack --config webpack.api.js --watch",
+    "buildApi": "NODE_ENV=production webpack --mode=production --config webpack.api.js",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
     "start": "react-scripts start",

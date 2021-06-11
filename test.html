@@ -11,18 +11,33 @@
 
     <script src="./dist/public-api.js"></script>
     <script>
-      //   window.open(
-      //     "http://localhost:3000/tic-tac-toe",
-      //     "SingleSecondaryWindowName",
-      //     "resizable,scrollbars,status"
-      //   );
-    //   const iframe = document.createElement("iframe");
-    //   iframe.src = "http://localhost:3000/tic-tac-toe";
-    //   const div = document.createElement("div");
-    //   div.style.cssText =
-    //     "position: fixed; top: 0; left: 0; width: 50px; height: 50px;";
-    //   div.appendChild(iframe);
-    //   document.body.appendChild(div);
+      // window.open(
+      //   "http://localhost:3000/tic-tac-toe",
+      //   "SingleSecondaryWindowName",
+      //   "resizable,scrollbars,status"
+      // );
+      //   const iframe = document.createElement("iframe");
+      //   iframe.src = "http://localhost:3000/tic-tac-toe";
+      //   const div = document.createElement("div");
+      //   div.style.cssText =
+      //     "position: fixed; top: 0; left: 0; width: 50px; height: 50px;";
+      //   div.appendChild(iframe);
+      //   document.body.appendChild(div);
+
+      window.xxx = Bsv();
+      // window.xxx.requestAccount({ name: "harry" }).then((res) => {
+      //   console.log("requestAccount", res);
+      // });
+      window.xxx
+        .transferBsv({
+          receivers: [
+            {
+              address: "mg4YnKJGgwqCUWd7Kf8g9r5Pr5Zs6KR8BV",
+              amount: 800000000,
+            },
+          ],
+        })
+        .then((res) => console.log("transferBsvRes", res));
     </script>
   </body>
 </html>

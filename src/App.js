@@ -31,8 +31,10 @@ import {
   getWocTransactionUrl,
   getSensibleFtHistoryUrl,
 } from "./lib";
-import { useGlobalState } from "./state/state";
+import * as createPostMsg from "post-msg";
+import { getGlobalState, useGlobalState } from "./state/state";
 import * as actions from "./state/action";
+import { useOnceCall } from "./hooks";
 import "./App.css";
 
 const { Option } = Select;
@@ -177,14 +179,18 @@ function AccountInfoPanel({ onWithDraw, onTransfer }) {
       className="card"
       title="Account Info"
       bordered={false}
-      actions={[
-        <Button type="link" onClick={handleHistory}>
-          history
-        </Button>,
-        <Button type="link" onClick={onWithDraw}>
-          withdraw
-        </Button>,
-      ]}
+      actions={
+        <>
+          <Button type="link" onClick={handleHistory}>
+            history
+          </Button>
+          ,
+          <Button type="link" onClick={onWithDraw}>
+            withdraw
+          </Button>
+          ,
+        </>
+      }
     >
       <Form layout="vertical">
         <Form.Item label={`${account.network} address`}>
@@ -223,28 +229,32 @@ function AccountInfoPanel({ onWithDraw, onTransfer }) {
                 return (
                   <List.Item
                     key={item.genesis}
-                    actions={[
-                      <Popover
-                        placement="topRight"
-                        content={[
-                          <div>codehash: {item.codehash}</div>,
-                          <div>genesis: {item.genesis}</div>,
-                        ]}
-                      >
-                        <a
-                          key="list-loadmore-more"
-                          href={getSensibleFtHistoryUrl(
-                            account.network,
-                            key.address,
-                            item.genesis,
-                            item.codehash
-                          )}
-                          target="_blank"
+                    actions={
+                      <>
+                        <Popover
+                          placement="topRight"
+                          content={
+                            <>
+                              <div>codehash: {item.codehash}</div>,
+                              <div>genesis: {item.genesis}</div>,
+                            </>
+                          }
                         >
-                          more info
-                        </a>
-                      </Popover>,
-                    ]}
+                          <a
+                            key="list-loadmore-more"
+                            href={getSensibleFtHistoryUrl(
+                              account.network,
+                              key.address,
+                              item.genesis,
+                              item.codehash
+                            )}
+                            target="_blank"
+                          >
+                            more info
+                          </a>
+                        </Popover>
+                      </>
+                    }
                   >
                     <List.Item.Meta
                       title={item.tokenSymbol}
@@ -288,15 +298,30 @@ function TransferPanel({
   genesis = "",
   initReceivers = [],
   onCancel,
+  onTransferCallback,
 }) {
   const [key] = useGlobalState("key");
   const [bsvBalance] = useGlobalState("bsvBalance");
   const [account] = useGlobalState("account");
   const [sensibleFtList] = useGlobalState("sensibleFtList");
   const [satotxConfigMap] = useGlobalState("satotxConfigMap");
-  const [receivers, setReceivers] = useState(initReceivers);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+
+  useOnceCall(() => {
+    console.log("initReceivers", initReceivers);
+    const isBsv = genesis === "";
+    const token = sensibleFtList.find((item) => item.genesis === genesis);
+    const decimal = isBsv ? 8 : token.tokenDecimal;
+    form.setFieldsValue({
+      receiverList: initReceivers.map((item) => {
+        return {
+          address: item.address,
+          amount: item.amount / 10 ** decimal,
+        };
+      }),
+    });
+  }, key && bsvBalance && initReceivers.length);
 
   if (!key) {
     return null;
@@ -323,13 +348,20 @@ function TransferPanel({
     const { receiverList } = form.getFieldsValue();
     const totalOutputValue =
       receiverList.reduce((prev, cur) => prev + cur.amount, 0) * 10 ** decimal;
-    console.log("receiverList", receiverList, totalOutputValue, formatBalance);
     if (balance < totalOutputValue) {
-      return message.error("Insufficient balance");
+      const msg = "Insufficient balance";
+      onTransferCallback({
+        error: msg,
+      });
+      return message.error(msg);
     }
 
     if (!isBsv && !satotxConfigMap.has(genesis)) {
-      return message.error("Token rabin signer not set yet");
+      const msg = "Token rabin signer not set yet";
+      onTransferCallback({
+        error: msg,
+      });
+      return message.error(msg);
     }
 
     const formatReceiverList = receiverList.map((item) => {
@@ -350,11 +382,20 @@ function TransferPanel({
         );
         txid = res.txid;
       } catch (err) {
+        const msg = "broadcast error: " + err.toString();
+        onTransferCallback({
+          error: msg,
+        });
         console.log("broadcast bsv error ", err);
         message.error(err.toString());
       }
       setLoading(false);
       if (txid) {
+        onTransferCallback({
+          response: {
+            txid,
+          },
+        });
         Modal.success({
           title: "Transaction broadcast success",
           content: (
@@ -534,6 +575,11 @@ function App() {
 
   const [trasfering, setTransfering] = useState(false);
   const [trasferSensibleFtGenesis, setTrasferSensibleFtGenesis] = useState("");
+  const [account] = useGlobalState("account");
+  const [key] = useGlobalState("key");
+  const [bsvBalance] = useGlobalState("bsvBalance");
+  const [sensibleFtList] = useGlobalState("sensibleFtList");
+  const [initReceivers, setInitReceivers] = useState([]);
 
   const handleTransfer = (genesis) => {
     setTransfering(true);
@@ -544,8 +590,116 @@ function App() {
     setTrasferSensibleFtGenesis("");
   };
 
+  const getHashData = () => {
+    if (!window.opener) {
+      return null;
+    }
+    const hash = window.location.hash.substr(1);
+    try {
+      const data = JSON.parse(decodeURIComponent(hash));
+      if (data.type === "popup") {
+        if (typeof data.data === "object") {
+          return data;
+        }
+      }
+    } catch (err) {}
+    return null;
+  };
+  const handlePopResponseCallback = (resObj) => {
+    const data = getHashData();
+    if (!data) {
+      return;
+    }
+    const postMsg = createPostMsg(window.opener, "*");
+    postMsg.emit(data.id, {
+      type: "response",
+      data: {
+        ...data.data.data,
+        ...resObj,
+      },
+    });
+  };
+
   // todo 数值计算 使用 bignumber
   // todo 此处接收 postMessage 消息，处理登录,transfer
+  const requestAccountCondition = key?.address && account?.network;
+  const transferBsvCondition =
+    requestAccountCondition && bsvBalance && bsvBalance.balance >= 0;
+  useOnceCall(() => {
+    const data = getHashData();
+    if (!data || data.data.type !== "request") {
+      return;
+    }
+
+    const { method, params } = data.data.data;
+    if (method !== "requestAccount") {
+      return;
+    }
+    Modal.confirm({
+      title: "Connect",
+      content: `Allow ${params.name} to connect your web wallet`,
+      onOk: () => {
+        handlePopResponseCallback({ response: true });
+      },
+      onCancel: () => {
+        handlePopResponseCallback({ error: "user reject" });
+      },
+    });
+  }, !!requestAccountCondition);
+  useOnceCall(() => {
+    const data = getHashData();
+    if (!data || data.data.type !== "request") {
+      return;
+    }
+
+    const { method, params } = data.data.data;
+    if (method !== "transferBsv") {
+      return;
+    }
+    // balance check
+    const outputTotal = params.receivers.reduce(
+      (prev, cur) => prev + cur.amount,
+      0
+    );
+    if (outputTotal >= bsvBalance.balance) {
+      handlePopResponseCallback({ error: "insufficient balance" });
+      return;
+    }
+    setTransfering(true);
+    setInitReceivers(params.receivers);
+  }, !!transferBsvCondition);
+  useOnceCall(() => {
+    const data = getHashData();
+    if (!data || data.data.type !== "request") {
+      return;
+    }
+
+    const { method, params } = data.data.data;
+    if (method !== "transferSensibleFt") {
+      return;
+    }
+    // sensibleft balance check
+    const outputTotal = params.receivers.reduce(
+      (prev, cur) => prev + cur.amount,
+      0
+    );
+    const ft = sensibleFtList.find((item) => item.genesis === params.genesis);
+    if (!ft) {
+      handlePopResponseCallback({ error: "insufficient balance" });
+      return;
+    }
+    if (outputTotal >= ft.balance) {
+      handlePopResponseCallback({ error: "insufficient balance" });
+      return;
+    }
+    setTrasferSensibleFtGenesis(params.genesis);
+    setInitReceivers(params.receivers);
+  }, !!transferBsvCondition);
+  useEffect(() => {
+    window.onbeforeunload = function () {
+      handlePopResponseCallback({ error: "use closed" });
+    };
+  }, []);
 
   return (
     <div className="App" style={{ overflow: "hidden" }}>
@@ -556,6 +710,8 @@ function App() {
         <TransferPanel
           genesis={trasferSensibleFtGenesis}
           onCancel={handleCancelTransfer}
+          onTransferCallback={handlePopResponseCallback}
+          initReceivers={initReceivers}
         />
       )}
     </div>

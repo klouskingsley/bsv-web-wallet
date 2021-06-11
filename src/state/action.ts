@@ -53,17 +53,18 @@ export async function pollingSensibleFtBalance() {
             console.log('getAddressSensibleFtList err', account.network, key.address, err)
         }
     }
+    await fn()
     pollingSensibleFtTimer = window.setInterval(fn, 5000)
 }
 
-export function saveAccount(account: Account | null) {
+export async function saveAccount(account: Account | null) {
     saveAccountStorage(account)
     if (account) {
         const key = generateKeysFromEmailPassword(account.email, account.password, account.network)
         setGlobalState('account', account)
         setGlobalState('key', key)
+        await pollingSensibleFtBalance()
         pollingBsvBalance()
-        pollingSensibleFtBalance()
     } else {
         setGlobalState("account", null)
         setGlobalState('key', null)
