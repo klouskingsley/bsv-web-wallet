@@ -1,9 +1,9 @@
 {
-  "name": "tic-tac-toe",
+  "name": "bsv-web-wallet",
   "version": "0.1.0",
   "private": true,
   "main": "dist/public-api.js",
-  "homepage": "https://sCrypt-Inc.github.io/tic-tac-toe",
+  "homepage": "http://bsv-web-wallet.vercel.app",
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
     "@testing-library/jest-dom": "^5.11.9",
