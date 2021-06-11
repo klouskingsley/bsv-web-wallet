@@ -3,10 +3,7 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-
-import { generateKeysFromEmailPassword } from "./lib";
-
-generateKeysFromEmailPassword("harry_tse@163.com", "1234567890");
+import * as actions from "./state/action";
 
 ReactDOM.render(
   <React.StrictMode>
@@ -14,6 +11,12 @@ ReactDOM.render(
   </React.StrictMode>,
   document.getElementById("root")
 );
+
+console.log("window === window.top", window === window.top);
+
+actions.runIframeTask();
+
+// alert(window === window.top);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
