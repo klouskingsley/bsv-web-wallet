@@ -1,5 +1,5 @@
 import { createGlobalState } from "react-hooks-global-state";
-import {State, Account, Key, SensibleSatotx} from './stateType'
+import {State, SensibleSatotx} from './stateType'
 
 const defaultSatotx: SensibleSatotx = {
     satotxApiPrefix: 'https://api.satotx.com', 

@@ -1,7 +1,6 @@
-import { promises } from 'dns';
-import { buildContractClass, buildTypeClasses, ScryptType, SigHashPreimage, bsv, getPreimage, toHex } from 'scryptlib';
+import { buildContractClass, buildTypeClasses, ScryptType, bsv } from 'scryptlib';
 import { } from 'scryptlib';
-import { Output, UTXO, wallet, Tx, Input, SignType, NetWork } from './wallet';
+import { UTXO, wallet, Tx,SignType, NetWork } from './wallet';
 import axios from 'axios';
 import { AbstractContract } from 'scryptlib/dist/contract';
 import { toRawTx } from './wutils';

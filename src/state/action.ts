@@ -1,5 +1,5 @@
 import {setGlobalState, getGlobalState } from './state'
-import {generateKeysFromEmailPassword, getAddressSensibleFtList, getAddressBsvBalance, getAddressSensibleFtBalance} from '../lib'
+import {generateKeysFromEmailPassword, getAddressSensibleFtList, getAddressBsvBalance} from '../lib'
 import {Account, BalanceBsv, Key, SensibleFt} from './stateType'
 import * as createPostMsg from 'post-msg';
 

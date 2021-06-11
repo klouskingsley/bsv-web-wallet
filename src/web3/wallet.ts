@@ -1,6 +1,4 @@
 
-import { toHex, bsv } from 'scryptlib';
-
 export interface UTXO {
   txHash: number,
   outputIndex: string;

@@ -3,7 +3,6 @@ import { NetWork } from '../web3';
 import {Key, SensibleFt, SensibleSatotx, TransferReceiver, BsvUtxo} from '../state/stateType'
 import axios from 'axios'
 import {SensibleFT} from 'sensible-sdk'
-import BigNumber from 'bignumber.js'
 
 function getSensibleApiPrefix(network: NetWork) {
     const test = network === NetWork.Mainnet ? '' : '/test'

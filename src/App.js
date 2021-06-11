@@ -32,7 +32,7 @@ import {
   getSensibleFtHistoryUrl,
 } from "./lib";
 import * as createPostMsg from "post-msg";
-import { getGlobalState, useGlobalState } from "./state/state";
+import { useGlobalState } from "./state/state";
 import * as actions from "./state/action";
 import { useOnceCall } from "./hooks";
 import "./App.css";
@@ -248,6 +248,7 @@ function AccountInfoPanel({ onWithDraw, onTransfer }) {
                               item.genesis,
                               item.codehash
                             )}
+                            rel="noreferrer"
                             target="_blank"
                           >
                             more info
@@ -403,6 +404,7 @@ function TransferPanel({
               txid:{" "}
               <a
                 target="_blank"
+                rel="noreferrer" 
                 href={getWocTransactionUrl(account.network, txid)}
               >
                 {txid}
@@ -439,6 +441,7 @@ function TransferPanel({
               txid:{" "}
               <a
                 target="_blank"
+                rel="noreferrer" 
                 href={getWocTransactionUrl(account.network, txid)}
               >
                 {txid}
@@ -699,7 +702,7 @@ function App() {
     window.onbeforeunload = function () {
       handlePopResponseCallback({ error: "use closed" });
     };
-  }, []);
+  });
 
   return (
     <div className="App" style={{ overflow: "hidden" }}>

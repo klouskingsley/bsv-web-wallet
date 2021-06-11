@@ -1,5 +1,5 @@
 
-import { toHex, bsv, SigHashPreimage, getPreimage as getPreimage_ } from 'scryptlib';
+import { bsv, SigHashPreimage, getPreimage as getPreimage_ } from 'scryptlib';
 import { SignType, Tx, UTXO } from './wallet';
 
 
