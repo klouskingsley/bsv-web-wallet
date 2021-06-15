@@ -313,6 +313,16 @@ function TransferPanel({
     const isBsv = genesis === "";
     const token = sensibleFtList.find((item) => item.genesis === genesis);
     const decimal = isBsv ? 8 : token.tokenDecimal;
+    console.log(
+      "initReceivers",
+      initReceivers,
+      initReceivers.map((item) => {
+        return {
+          address: item.address,
+          amount: item.amount / 10 ** decimal,
+        };
+      })
+    );
     form.setFieldsValue({
       receiverList: initReceivers.map((item) => {
         return {
