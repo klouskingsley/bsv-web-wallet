@@ -2,6 +2,9 @@ const path = require("path");
 
 module.exports = {
   entry: "./public-api.js",
+  optimization: {
+    minimize: false,
+  },
   output: {
     library: "bsvWebWallet",
     libraryTarget: "umd",
@@ -9,7 +12,3 @@ module.exports = {
     filename: "public-api.js",
   },
 };
-
-if (process.env.NODE_ENV !== "production") {
-  module.exports.devtool = "source-map";
-}
