@@ -1,25 +1,25 @@
 {
   "files": {
     "main.css": "/bsv-web-wallet/static/css/main.9b17f559.chunk.css",
-    "main.js": "/bsv-web-wallet/static/js/main.c8460947.chunk.js",
-    "main.js.map": "/bsv-web-wallet/static/js/main.c8460947.chunk.js.map",
+    "main.js": "/bsv-web-wallet/static/js/main.de8aa7a3.chunk.js",
+    "main.js.map": "/bsv-web-wallet/static/js/main.de8aa7a3.chunk.js.map",
     "runtime-main.js": "/bsv-web-wallet/static/js/runtime-main.aaa1c6d9.js",
     "runtime-main.js.map": "/bsv-web-wallet/static/js/runtime-main.aaa1c6d9.js.map",
     "static/css/2.8c5372c1.chunk.css": "/bsv-web-wallet/static/css/2.8c5372c1.chunk.css",
-    "static/js/2.a2c07ce8.chunk.js": "/bsv-web-wallet/static/js/2.a2c07ce8.chunk.js",
-    "static/js/2.a2c07ce8.chunk.js.map": "/bsv-web-wallet/static/js/2.a2c07ce8.chunk.js.map",
+    "static/js/2.1037c3de.chunk.js": "/bsv-web-wallet/static/js/2.1037c3de.chunk.js",
+    "static/js/2.1037c3de.chunk.js.map": "/bsv-web-wallet/static/js/2.1037c3de.chunk.js.map",
     "static/js/3.02f3a32c.chunk.js": "/bsv-web-wallet/static/js/3.02f3a32c.chunk.js",
     "static/js/3.02f3a32c.chunk.js.map": "/bsv-web-wallet/static/js/3.02f3a32c.chunk.js.map",
     "index.html": "/bsv-web-wallet/index.html",
     "static/css/2.8c5372c1.chunk.css.map": "/bsv-web-wallet/static/css/2.8c5372c1.chunk.css.map",
     "static/css/main.9b17f559.chunk.css.map": "/bsv-web-wallet/static/css/main.9b17f559.chunk.css.map",
-    "static/js/2.a2c07ce8.chunk.js.LICENSE.txt": "/bsv-web-wallet/static/js/2.a2c07ce8.chunk.js.LICENSE.txt"
+    "static/js/2.1037c3de.chunk.js.LICENSE.txt": "/bsv-web-wallet/static/js/2.1037c3de.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.aaa1c6d9.js",
     "static/css/2.8c5372c1.chunk.css",
-    "static/js/2.a2c07ce8.chunk.js",
+    "static/js/2.1037c3de.chunk.js",
     "static/css/main.9b17f559.chunk.css",
-    "static/js/main.c8460947.chunk.js"
+    "static/js/main.de8aa7a3.chunk.js"
   ]
 }
