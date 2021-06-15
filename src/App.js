@@ -16,7 +16,7 @@ import {
 import {
   UserOutlined,
   LockOutlined,
-  MinusCircleOutlined,
+  MinusOutlined,
   PlusOutlined,
   LeftOutlined,
 } from "@ant-design/icons";
@@ -295,7 +295,6 @@ function AccountInfoPanel({ onWithDraw, onTransfer }) {
 }
 
 function TransferPanel({
-  canEdit = true,
   genesis = "",
   initReceivers = [],
   onCancel,
@@ -308,9 +307,9 @@ function TransferPanel({
   const [satotxConfigMap] = useGlobalState("satotxConfigMap");
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const canEdit = !(initReceivers.length > 0);
 
   useOnceCall(() => {
-    console.log("initReceivers", initReceivers);
     const isBsv = genesis === "";
     const token = sensibleFtList.find((item) => item.genesis === genesis);
     const decimal = isBsv ? 8 : token.tokenDecimal;
@@ -549,7 +548,13 @@ function TransferPanel({
                         disabled={!canEdit}
                       />
                     </Form.Item>
-                    <MinusCircleOutlined onClick={() => remove(name)} />
+                    <Button
+                      disabled={!canEdit}
+                      size="small"
+                      onClick={() => remove(name)}
+                      shape="circle"
+                      icon={<MinusOutlined />}
+                    />
                   </Space>
                 );
               })}
@@ -559,6 +564,7 @@ function TransferPanel({
                   type="dashed"
                   onClick={() => add()}
                   icon={<PlusOutlined />}
+                  disabled={!canEdit}
                 >
                   Add Output
                 </Button>
@@ -645,7 +651,11 @@ function App() {
     }
     Modal.confirm({
       title: "Connect",
-      content: <div>Allow <b>{params.name}</b> to connect your web wallet</div>,
+      content: (
+        <div>
+          Allow <b>{params.name}</b> to connect your web wallet
+        </div>
+      ),
       onOk: () => {
         handlePopResponseCallback({ response: true });
       },
