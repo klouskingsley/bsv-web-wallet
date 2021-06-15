@@ -217,6 +217,13 @@ export async function runIframeTask() {
         await requestLatestData()
         return preSensibleFtBalance
     })
+    handleRequest('getAddress', async () => {
+        await requestLatestData()
+        if (!accountKey) {
+            return null
+        }
+        return accountKey.address
+    })
 
     for (;;) {
         const signed = await requestLatestData()

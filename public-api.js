@@ -127,12 +127,14 @@ function Bsv({
     const getAccount = () => rpc("getAccount");
     const getBsvBalance = () => rpc("getBsvBalance");
     const getSensibleFtBalance = () => rpc("getSensibleFtBalance");
+    const getAddress = () => rpc("getAddress");
     const destroy = function () {
       iframe.parentChild.removeChild(iframe);
     };
 
     return {
       getAccount,
+      getAddress,
       getBsvBalance,
       getSensibleFtBalance,
       destroy,
@@ -171,6 +173,7 @@ function Bsv({
     transferBsv,
     transferSensibleFt,
     getAccount: backIframe.getAccount,
+    getAddress: backIframe.getAddress,
     getBsvBalance: backIframe.getBsvBalance,
     getSensibleFtBalance: backIframe.getSensibleFtBalance,
     on: outEmitter.on,

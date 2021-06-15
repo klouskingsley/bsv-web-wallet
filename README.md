@@ -41,6 +41,10 @@ const transferFtTres = await bsv.transferSensibleFt({
 
 获取钱包账户信息
 
+### bsv.getAddress(): Promise<string>
+
+获取钱包地址
+
 ### bsv.getBsvBalance(): Promise<{balance: number}>
 
 获取钱包 bsv 余额，balance 单位为 satoshi
