@@ -169,9 +169,9 @@ function AccountInfoPanel({ onWithDraw, onTransfer }) {
     if (!genesis) {
       return onTransfer("");
     }
-    if (!satotxConfigMap.has(genesis)) {
-      return message.error("rabin api not set or found");
-    }
+    // if (!satotxConfigMap.has(genesis)) {
+    //   return message.error("rabin api not set or found");
+    // }
     return onTransfer(genesis);
   };
   return [
