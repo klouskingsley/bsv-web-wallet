@@ -24,4 +24,5 @@ export {
     useGlobalState,
     getGlobalState,
     setGlobalState,
+    defaultSatotx,
 }

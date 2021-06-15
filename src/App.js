@@ -32,7 +32,7 @@ import {
   getSensibleFtHistoryUrl,
 } from "./lib";
 import * as createPostMsg from "post-msg";
-import { useGlobalState } from "./state/state";
+import { useGlobalState, defaultSatotx } from "./state/state";
 import * as actions from "./state/action";
 import { useOnceCall } from "./hooks";
 import "./App.css";
@@ -356,13 +356,14 @@ function TransferPanel({
       return message.error(msg);
     }
 
-    if (!isBsv && !satotxConfigMap.has(genesis)) {
-      const msg = "Token rabin signer not set yet";
-      onTransferCallback({
-        error: msg,
-      });
-      return message.error(msg);
-    }
+    // 不存在的话，使用默认的 api.satotx.com
+    // if (!isBsv && !satotxConfigMap.has(genesis)) {
+    //   const msg = "Token rabin signer not set yet";
+    //   onTransferCallback({
+    //     error: msg,
+    //   });
+    //   return message.error(msg);
+    // }
 
     const formatReceiverList = receiverList.map((item) => {
       return {
@@ -418,9 +419,14 @@ function TransferPanel({
       setLoading(true);
       let txid = "";
       try {
+        const signers = satotxConfigMap.get(genesis) || [
+          defaultSatotx,
+          defaultSatotx,
+          defaultSatotx,
+        ];
         const res = await transferSensibleFt(
           account.network,
-          satotxConfigMap.get(genesis),
+          signers,
           key.privateKey,
           formatReceiverList,
           token.codehash,
