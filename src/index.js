@@ -5,16 +5,18 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import * as actions from "./state/action";
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById("root")
-);
+const isIframe = window === window.top;
 
-console.log("window === window.top", window === window.top);
-
-actions.runIframeTask();
+if (isIframe) {
+  ReactDOM.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+    document.getElementById("root")
+  );
+} else {
+  actions.runIframeTask();
+}
 
 // alert(window === window.top);
 

@@ -200,7 +200,14 @@ export async function runIframeTask() {
 
     handleRequest('getAccount', async () => {
         await requestLatestData()
-        return preAccount
+        if (!preAccount) {
+            return null
+        }
+        return {
+            name: preAccount.email,
+            email: preAccount.email,
+            network: preAccount.network,
+        }
     });
     handleRequest('getBsvBalance', async () => {
         await requestLatestData()

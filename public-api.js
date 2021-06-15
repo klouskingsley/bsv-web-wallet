@@ -27,7 +27,10 @@ import { getSiteMetadata } from "./src/lib/dom";
 
      */
 
-function Bsv({ pageUrl = "http://localhost:3000/tic-tac-toe" } = {}) {
+function Bsv({
+  pageUrl = "https://klouskingsley.github.io/bsv-web-wallet",
+  debug = false,
+} = {}) {
   const uuid = function () {
     return `${Date.now()}.${Math.random()}`;
   };
@@ -38,7 +41,7 @@ function Bsv({ pageUrl = "http://localhost:3000/tic-tac-toe" } = {}) {
     const iframe = document.createElement("iframe");
     iframe.src = url;
     iframe.style.cssText =
-      "position: fixed; top: 0; left: 0; width: 50px; height: 50px;";
+      "position: fixed; top: -200px; left: -200px; width: 50px; height: 50px;";
     return iframe;
   };
 
@@ -95,7 +98,7 @@ function Bsv({ pageUrl = "http://localhost:3000/tic-tac-toe" } = {}) {
     const targetWindow = iframe.contentWindow;
     const postMsg = createPostMsg(targetWindow, "*");
     postMsg.on(`${hashdata.id}`, (type, data, origin) => {
-      console.log("type", type, data, origin);
+      debug && console.log("type", type, data, origin);
     });
 
     const rpc = (method, params) => {
@@ -174,6 +177,7 @@ function Bsv({ pageUrl = "http://localhost:3000/tic-tac-toe" } = {}) {
   };
 }
 
-module.exports = {
-  bsv: Bsv(),
+export default {
+  // bsv: Bsv(),
+  Bsv,
 };

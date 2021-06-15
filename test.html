@@ -24,20 +24,22 @@
       //   div.appendChild(iframe);
       //   document.body.appendChild(div);
 
-      window.xxx = Bsv();
-      // window.xxx.requestAccount({ name: "harry" }).then((res) => {
-      //   console.log("requestAccount", res);
-      // });
-      window.xxx
-        .transferBsv({
-          receivers: [
-            {
-              address: "mg4YnKJGgwqCUWd7Kf8g9r5Pr5Zs6KR8BV",
-              amount: 800000000,
-            },
-          ],
-        })
-        .then((res) => console.log("transferBsvRes", res));
+      const bsv = bsvWebWallet.default.Bsv({
+        pageUrl: "http://localhost:3000/bsv-web-wallet",
+      });
+
+      bsv.requestAccount().then((res) => {
+        console.log("requestAccount", res);
+      });
+      // bsv.transferBsv({
+      //     receivers: [
+      //       {
+      //         address: "mg4YnKJGgwqCUWd7Kf8g9r5Pr5Zs6KR8BV",
+      //         amount: 800000000,
+      //       },
+      //     ],
+      //   })
+      //   .then((res) => console.log("transferBsvRes", res));
     </script>
   </body>
 </html>

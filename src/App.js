@@ -404,7 +404,7 @@ function TransferPanel({
               txid:{" "}
               <a
                 target="_blank"
-                rel="noreferrer" 
+                rel="noreferrer"
                 href={getWocTransactionUrl(account.network, txid)}
               >
                 {txid}
@@ -434,6 +434,11 @@ function TransferPanel({
       }
       setLoading(false);
       if (txid) {
+        onTransferCallback({
+          response: {
+            txid,
+          },
+        });
         Modal.success({
           title: "Transaction broadcast success",
           content: (
@@ -441,7 +446,7 @@ function TransferPanel({
               txid:{" "}
               <a
                 target="_blank"
-                rel="noreferrer" 
+                rel="noreferrer"
                 href={getWocTransactionUrl(account.network, txid)}
               >
                 {txid}
@@ -640,7 +645,7 @@ function App() {
     }
     Modal.confirm({
       title: "Connect",
-      content: `Allow ${params.name} to connect your web wallet`,
+      content: <div>Allow <b>{params.name}</b> to connect your web wallet</div>,
       onOk: () => {
         handlePopResponseCallback({ response: true });
       },
