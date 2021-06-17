@@ -1,8 +1,11 @@
-import { bsv } from 'scryptlib';
+import { bsv, toHex } from 'scryptlib';
 import { NetWork } from '../web3';
 import {Key, SensibleFt, SensibleSatotx, TransferReceiver, BsvUtxo} from '../state/stateType'
 import axios from 'axios'
 import {SensibleFT} from 'sensible-sdk'
+import * as tokenProto from 'sensible-sdk/dist/bcp02/tokenProto'
+import * as protoHeader from 'sensible-sdk/dist/bcp02/protoheader'
+import { getCodeHash } from 'sensible-sdk/dist/common/utils';
 
 function getSensibleApiPrefix(network: NetWork) {
     const test = network === NetWork.Mainnet ? '' : '/test'
@@ -296,4 +299,132 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     return {
         txid
     }
+}
+
+
+
+
+const getGenesis = function (txid: string, index: number) {
+    const txidBuf = Buffer.from(txid, "hex").reverse();
+    const indexBuf = Buffer.alloc(4, 0);
+    indexBuf.writeUInt32LE(index);
+    return toHex(Buffer.concat([txidBuf, indexBuf]));
+};
+
+const hasProtoFlag = function (scriptBuffer: any) {
+    const flag = protoHeader.getFlag(scriptBuffer);
+    if (flag.compare(protoHeader.PROTO_FLAG) === 0) {
+      return true;
+    }
+    return false;
+};
+
+
+const parseTokenContractScript = function (scriptBuf: any, network: any = "mainnet") {
+    const hasSensibleFlag = hasProtoFlag(scriptBuf);
+    if (!hasSensibleFlag) {
+      return null;
+    }
+    const dataPart = tokenProto.parseDataPart(scriptBuf);
+    const tokenAddress = new bsv.Address(
+      Buffer.from(dataPart.tokenAddress!, "hex"),
+      network
+    ).toString();
+    const genesis = getGenesis(dataPart.tokenID!.txid, dataPart.tokenID!.index);
+    const codehash = getCodeHash(new bsv.Script(scriptBuf));
+    return {
+      ...dataPart,
+      genesis,
+      codehash,
+      tokenAddress,
+    };
+};
+
+
+
+export function parseTransaction(network: NetWork, rawtx: string) {
+    let tx
+    try {
+        tx = new bsv.Transaction(rawtx)
+    } catch (err) {
+        return {
+            error: err.message
+        }
+    }
+
+    const inputs = tx.inputs.map((input: any, index: number) => {
+        const ftToken: any = parseTokenContractScript(input.script.toBuffer(), network);
+
+        let ret: any = {
+            index: index,
+            prevTxId: input.prevTxId.toString('hex'),
+            outputIndex: input.outputIndex,
+            script: input.script.toString('hex'),
+        }
+        try {
+            const addr = input.script.toAddress(network);
+            if (addr) {
+                ret.address = addr.toString()
+            }
+        } catch (err) {}
+        if (!ftToken) {
+            return ret
+        }
+        if (ftToken.tokenAmount <= 0) {
+            return ret
+        }
+        ret = {
+            ...ret,
+            isFt: true,
+            ftDetail: {
+                genesis: ftToken.genesis,
+                codehash: ftToken.codehash,
+                address: ftToken.tokenAddress,
+                decimal: ftToken.decimalNum,
+                name: ftToken.tokenName,
+                symbol: ftToken.tokenSymbol,
+            }
+        }
+    })
+    const outputs = tx.outputs.map((output: any, index: number) => {
+        const ftToken: any = parseTokenContractScript(output.script.toBuffer(), network);
+        let ret: any = {
+            index: index,
+            satoshis: output.satoshis,
+            script: output.script.toString('hex')
+        }
+        try {
+            const addr = output.script.toAddress(network);
+            if (addr) {
+                ret.address = addr.toString()
+            }
+        } catch (err) {}
+        if (!ftToken) {
+            return ret
+        }
+        if (ftToken.tokenAmount <= 0) {
+            return ret
+        }
+        ret = {
+            ...ret,
+            isFt: true,
+            ftDetail: {
+                genesis: ftToken.genesis,
+                codehash: ftToken.codehash,
+                address: ftToken.tokenAddress,
+                decimal: ftToken.decimalNum,
+                name: ftToken.tokenName,
+                symbol: ftToken.tokenSymbol,
+                amount: ftToken.tokenAmount,
+            }
+        }
+        return ret
+    })
+
+    return {
+        inputs: inputs,
+        outputs: outputs,
+        txid: tx.hash,
+    }
+    
 }

@@ -30,6 +30,7 @@ import {
   transferSensibleFt,
   getWocTransactionUrl,
   getSensibleFtHistoryUrl,
+  parseTransaction,
 } from "./lib";
 import * as createPostMsg from "post-msg";
 import { useGlobalState, defaultSatotx } from "./state/state";
@@ -42,6 +43,10 @@ const { Option } = Select;
 function Header() {
   const [account] = useGlobalState("account");
   const [key] = useGlobalState("key");
+  const [decodeModalVisible, setDecodeModalVisible] = useState(false);
+  const [rawtx, setRawtx] = useState("");
+  const [network, setNetwork] = useState("");
+  const [resultModalVisible, setResultModalVisible] = useState(false);
 
   const handleLogout = () => {
     actions.saveAccount(null);
@@ -52,6 +57,11 @@ function Header() {
   };
   const handleSourceCode = () => {
     window.open("http://github.com");
+  };
+
+  const decodeTx = () => {
+    const res = parseTransaction(network, rawtx);
+    console.log("decodeTx res", res);
   };
 
   return (
@@ -73,12 +83,42 @@ function Header() {
               <Button type="link" onClick={handleSourceCode}>
                 Source Code
               </Button>
+              <br />
+              <Button type="link" onClick={() => setDecodeModalVisible(true)}>
+                decode rawtx
+              </Button>
             </>
           }
         >
           <Button type="link">{account.email}</Button>
         </Popover>
       )}
+      <Modal
+        visible={decodeModalVisible}
+        onCancel={() => setDecodeModalVisible(false)}
+      >
+        <Input.TextArea
+          rows={4}
+          value={rawtx}
+          onChange={(e) => setRawtx(e.target.value)}
+        ></Input.TextArea>
+        <Select
+          style={{ width: 180 }}
+          placeholder="Select network"
+          value={network}
+          onChange={(value) => setNetwork(value)}
+        >
+          <Option value="mainnet">mainnet</Option>
+          <Option value="testnet">testnet</Option>
+        </Select>
+        <Button type="primary" onClick={decodeTx}>
+          decode
+        </Button>
+      </Modal>
+      <Modal
+        visible={resultModalVisible}
+        onCancel={() => setResultModalVisible(false)}
+      ></Modal>
     </div>
   );
 }
@@ -444,7 +484,7 @@ function TransferPanel({
         txid = res.txid;
       } catch (err) {
         console.log("broadcast sensible ft error ");
-        console.error(err)
+        console.error(err);
         message.error(err.toString());
       }
       setLoading(false);
