@@ -143,7 +143,7 @@ export async function getAddressBsvBalance(network: NetWork, address: string): P
     const {data} = await axios.get(`${apiPrefix}/address/${address}/balance`)
     const success = isSensibleSuccess(data)
     if (success) {
-        return data.data.satoshi
+        return data.data.satoshi + data.data.pendingSatoshi
     }
     throw new Error(data.msg)
 }
