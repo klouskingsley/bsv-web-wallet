@@ -180,11 +180,13 @@ export async function broadcastSensibleQeury(network: NetWork, rawtx: string) {
 
 // 发送 token 交易
 export async function transferSensibleFt(network: NetWork, signers: SensibleSatotx[], senderWif: string, receivers: TransferReceiver[], codehash: string, genesis: string){
+    const selectRes = await SensibleFT.selectSigners()
     const ft = new SensibleFT({
         network: network as any,
         purse: senderWif,
         feeb: 0.5,
-        signers
+        signerSelecteds: selectRes.signerSelecteds,
+        signers: selectRes.signers,
     })
     const {txid} = await ft.transfer({
         senderWif: senderWif,

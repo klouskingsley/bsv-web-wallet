@@ -5,6 +5,8 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import * as actions from "./state/action";
 
+import { Buffer } from "buffer/index";
+
 const isIframe = window === window.top;
 
 if (isIframe) {

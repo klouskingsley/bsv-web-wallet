@@ -156,7 +156,6 @@ function AccountInfoPanel({ onWithDraw, onTransfer }) {
   const [account] = useGlobalState("account");
   const [bsvBalance] = useGlobalState("bsvBalance");
   const [sensibleFtList] = useGlobalState("sensibleFtList");
-  const [satotxConfigMap] = useGlobalState("satotxConfigMap");
 
   if (!key) {
     return null;
@@ -444,7 +443,8 @@ function TransferPanel({
         );
         txid = res.txid;
       } catch (err) {
-        console.log("broadcast sensible ft error ", err);
+        console.log("broadcast sensible ft error ");
+        console.error(err)
         message.error(err.toString());
       }
       setLoading(false);
