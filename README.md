@@ -12,7 +12,7 @@ npm i -S git+https://github.com/klouskingsley/bsv-web-wallet.git
 import webWallet from "bsv-web-wallet";
 const { Bsv } = webWallet;
 
-const bsv = new Bsv()
+const bsv = new Bsv();
 // 连接到钱包
 await bsv.requestAccount().then();
 // 获取钱包账户信息
@@ -36,6 +36,10 @@ const transferFtTres = await bsv.transferSensibleFt({
 ### bsv.requestAccount(): Promise<void>
 
 连接到钱包
+
+### bsv.exitAccount(): Promise<void>
+
+退出登录
 
 ### bsv.getAccount(): Promise<{name: string, network: 'mainnet' | 'testnet'}>
 

@@ -224,6 +224,9 @@ export async function runIframeTask() {
         }
         return accountKey.address
     })
+    handleRequest('logout', async () => {
+        saveAccountStorage(null)
+    })
 
     for (;;) {
         const signed = await requestLatestData()
