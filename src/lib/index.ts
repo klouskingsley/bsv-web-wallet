@@ -15,6 +15,10 @@ function isSensibleSuccess(res: any) {
     return res.code === 0 && res.msg === 'ok'
 }
 
+function sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 export function formatValue(value: number, decimal: number) {
     // const bigNum = bsv.crypto.BN.fromNumber(value)
     // return bigNum.div(10**decimal).toString(10)
@@ -191,13 +195,92 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
         signerSelecteds: selectRes.signerSelecteds,
         signers: selectRes.signers,
     })
-    const {txid} = await ft.transfer({
-        senderWif: senderWif,
-        receivers,
-        codehash,
-        genesis,
-    })
-    return {txid}
+
+    try {
+        const {txid} = await ft.transfer({
+            senderWif: senderWif,
+            receivers,
+            codehash,
+            genesis,
+        })
+        return {txid}
+    } catch (err) {
+        const errMsg = err.toString();
+        const isBsvAmountExceed =
+          errMsg.indexOf(
+            "The count of utxos should not be more than 3 in transfer"
+          ) > 0;
+        let isFtUtxoAmountExceed = errMsg.indexOf('Too many token-utxos') > 0;
+        console.log("broadcast sensible ft error ");
+        console.error(err);
+
+        if (!isBsvAmountExceed && !isFtUtxoAmountExceed) {
+            throw err;
+        }
+
+        // 如果 bsv utxo 先 merge bsv utxo
+        if (isBsvAmountExceed) {
+            try {
+                await mergeBsvUtxo(network, senderWif)
+                await sleep(3000)
+            } catch (err) {
+                console.log('merge bsv utxo fail')
+                console.error(err)
+                
+            }
+
+            // merge 后重新发起 ft transfer 交易
+            try {
+                const {txid} = await ft.transfer({
+                    senderWif: senderWif,
+                    receivers,
+                    codehash,
+                    genesis,
+                })
+                return {txid}
+            } catch (err) {
+                console.log('ft transfer fail after bsv utxo merge')
+                console.error(err)
+                const errMsg = err.toString()
+                isFtUtxoAmountExceed = errMsg.indexOf('Too many token-utxos') > 0;
+                if (!isFtUtxoAmountExceed) {
+                    throw err
+                }
+            }
+        }
+
+        if (isFtUtxoAmountExceed) {
+            // merge utxo
+            try {
+                await ft.merge({
+                    ownerWif: senderWif,
+                    codehash,
+                    genesis,
+                })
+                await sleep(3000)
+            } catch (err) {
+                console.log('merge ft utxo fail')
+                console.error(err)
+                throw err
+            }
+
+            // merge 后重新发起 ft transfer 交易
+            try {
+                const {txid} = await ft.transfer({
+                    senderWif: senderWif,
+                    receivers,
+                    codehash,
+                    genesis,
+                })
+                return {txid}
+            } catch (err) {
+                console.log('ft transfer fail after ft utxo merge')
+                console.error(err)
+                throw err
+            }
+        }
+
+    } 
 }
 
 const Signature = bsv.crypto.Signature;
@@ -252,7 +335,7 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     const dust = 456
 
     // input = output + fee + change
-    // 异常情况: 加上 change 后, fee 增加, 原本 input 不够了, 此时将所有输出移除, 然后
+    // 异常情况: 加上 change 后, fee 增加, 原本 input 不够了, 此时将所有输出移除, 然后，暂不考虑
     
     for (let page = 1; ;page++) {
         const utxoResList = await getAddressBsvUtxoList(network, address, page)
@@ -301,8 +384,36 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     }
 }
 
+// 合并 bsv utxo, 合并一页
+export async function mergeBsvUtxo(network: NetWork, senderWif: string) {
+    const address = new bsv.PrivateKey(senderWif, network).toAddress(network)
+    const utxolist = await getAddressBsvUtxoList(network, address, 1)
+    const tx = new bsv.Transaction()
+    tx.feePerKb(500)
+    utxolist.forEach(item => {
+        tx.addInput(new bsv.Transaction.Input.PublicKeyHash({
+            output: new bsv.Transaction.Output({
+                script: bsv.Script.buildPublicKeyHashOut(item.address),
+                satoshis: item.satoshis,
+            }),
+            prevTxId: item.txId,
+            outputIndex: item.outputIndex,
+            script: bsv.Script.empty(),
+        }))
+    })
+    tx.change(address)
+    tx.inputs.forEach((_: any, inputIndex: number) => {
+        const privateKey = new bsv.PrivateKey(senderWif)
+        unlockP2PKHInput(privateKey, tx, inputIndex, sighashType)
+    })
+    const txid = await broadcastSensibleQeury(network, tx.serialize())
+    return {
+        txid,
+    }
+}
 
-
+// 合并 sensible ft
+export async function mergeSensibleFt(network: NetWork) {}
 
 const getGenesis = function (txid: string, index: number) {
     const txidBuf = Buffer.from(txid, "hex").reverse();
