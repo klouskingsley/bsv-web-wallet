@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/bsv-web-wallet/static/css/main.9b17f559.chunk.css",
-    "main.js": "/bsv-web-wallet/static/js/main.1ae2b35d.chunk.js",
-    "main.js.map": "/bsv-web-wallet/static/js/main.1ae2b35d.chunk.js.map",
+    "main.js": "/bsv-web-wallet/static/js/main.6c6d4bbf.chunk.js",
+    "main.js.map": "/bsv-web-wallet/static/js/main.6c6d4bbf.chunk.js.map",
     "runtime-main.js": "/bsv-web-wallet/static/js/runtime-main.6fe2af76.js",
     "runtime-main.js.map": "/bsv-web-wallet/static/js/runtime-main.6fe2af76.js.map",
     "static/css/2.b4e56faa.chunk.css": "/bsv-web-wallet/static/css/2.b4e56faa.chunk.css",
@@ -20,6 +20,6 @@
     "static/css/2.b4e56faa.chunk.css",
     "static/js/2.c630fde4.chunk.js",
     "static/css/main.9b17f559.chunk.css",
-    "static/js/main.1ae2b35d.chunk.js"
+    "static/js/main.6c6d4bbf.chunk.js"
   ]
 }
