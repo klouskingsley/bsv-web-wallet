@@ -197,13 +197,17 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
     })
 
     try {
-        const {txid} = await ft.transfer({
+        const {txid, tx} = await ft.transfer({
             senderWif: senderWif,
             receivers,
             codehash,
             genesis,
         })
-        return {txid}
+        const txParseRes = parseTransaction(network, tx.serialize(true))
+        return {
+            txid,
+            outputs: txParseRes.outputs,
+        }
     } catch (err) {
         const errMsg = err.toString();
         const isBsvAmountExceed =
@@ -231,13 +235,17 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
 
             // merge 后重新发起 ft transfer 交易
             try {
-                const {txid} = await ft.transfer({
+                const {txid, tx} = await ft.transfer({
                     senderWif: senderWif,
                     receivers,
                     codehash,
                     genesis,
                 })
-                return {txid}
+                const txParseRes = parseTransaction(network, tx.serialize(true))
+                return {
+                    txid,
+                    outputs: txParseRes.outputs,
+                }
             } catch (err) {
                 console.log('ft transfer fail after bsv utxo merge')
                 console.error(err)
@@ -266,13 +274,17 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
 
             // merge 后重新发起 ft transfer 交易
             try {
-                const {txid} = await ft.transfer({
+                const {txid, tx} = await ft.transfer({
                     senderWif: senderWif,
                     receivers,
                     codehash,
                     genesis,
                 })
-                return {txid}
+                const txParseRes = parseTransaction(network, tx.serialize(true))
+                return {
+                    txid,
+                    outputs: txParseRes.outputs,
+                }
             } catch (err) {
                 console.log('ft transfer fail after ft utxo merge')
                 console.error(err)
@@ -379,8 +391,10 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
         unlockP2PKHInput(privateKey, tx, inputIndex, sighashType);
     });
     const txid = await broadcastSensibleQeury(network, tx.serialize())
+    const txParseRes = parseTransaction(network, tx.serialize(true))
     return {
-        txid
+        txid,
+        outputs: txParseRes.outputs,
     }
 }
 
@@ -407,8 +421,10 @@ export async function mergeBsvUtxo(network: NetWork, senderWif: string) {
         unlockP2PKHInput(privateKey, tx, inputIndex, sighashType)
     })
     const txid = await broadcastSensibleQeury(network, tx.serialize())
+    const txParseRes = parseTransaction(network, tx.serialize(true))
     return {
         txid,
+        outputs: txParseRes.outputs,
     }
 }
 

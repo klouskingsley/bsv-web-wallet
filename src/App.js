@@ -441,12 +441,14 @@ function TransferPanel({
     const broadcastBsv = async () => {
       setLoading(true);
       let txid = "";
+      let transferRes;
       try {
         const res = await await transferBsv(
           account.network,
           key.privateKey,
           formatReceiverList
         );
+        transferRes = res;
         txid = res.txid;
       } catch (err) {
         const msg = "broadcast error: " + err.toString();
@@ -460,7 +462,7 @@ function TransferPanel({
       if (txid) {
         onTransferCallback({
           response: {
-            txid,
+            ...transferRes,
           },
         });
         Modal.success({
@@ -484,6 +486,7 @@ function TransferPanel({
     const broadcastSensibleFt = async () => {
       setLoading(true);
       let txid = "";
+      let transferRes;
       try {
         const signers = satotxConfigMap.get(genesis) || [
           defaultSatotx,
@@ -498,6 +501,7 @@ function TransferPanel({
           token.codehash,
           token.genesis
         );
+        transferRes = res;
         txid = res.txid;
       } catch (err) {
         console.log("broadcast sensible ft error ");
@@ -508,7 +512,7 @@ function TransferPanel({
       if (txid) {
         onTransferCallback({
           response: {
-            txid,
+            ...transferRes,
           },
         });
         Modal.success({
