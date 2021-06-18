@@ -10,6 +10,8 @@ import createPostMsg from "post-msg";
 import createEmitter from "on-emit";
 import { getSiteMetadata } from "./src/lib/dom";
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // createOpener: postMsg:on:ready -> postMsg:post:ready -> postMsg:on:func-xxx -> postMsg:post:func-xxx
 // 流程
 /**
@@ -124,11 +126,29 @@ function Bsv({
       });
     };
 
-    const getAccount = () => rpc("getAccount");
-    const getBsvBalance = () => rpc("getBsvBalance");
-    const getSensibleFtBalance = () => rpc("getSensibleFtBalance");
-    const getAddress = () => rpc("getAddress");
-    const logout = () => rpc("logout");
+    const pingUntilResponse = async () => {
+      let receivedPong = false;
+      for (;;) {
+        rpc("ping").then(() => {
+          receivedPong = true;
+        });
+        if (receivedPong) {
+          break;
+        }
+        await sleep(50);
+      }
+    };
+
+    const rpcAfterPing = async (method) => {
+      await pingUntilResponse();
+      return rpc(method);
+    };
+
+    const getAccount = () => rpcAfterPing("getAccount");
+    const getBsvBalance = () => rpcAfterPing("getBsvBalance");
+    const getSensibleFtBalance = () => rpcAfterPing("getSensibleFtBalance");
+    const getAddress = () => rpcAfterPing("getAddress");
+    const logout = () => rpcAfterPing("logout");
     const destroy = function () {
       iframe.parentChild.removeChild(iframe);
     };

@@ -26,11 +26,21 @@
 
       const bsv = bsvWebWallet.default.Bsv({
         pageUrl: "http://localhost:3000/bsv-web-wallet",
+        debug: true,
       });
 
-      bsv.requestAccount().then((res) => {
-        console.log("requestAccount", res);
-      });
+      console.log("getAccount");
+      bsv
+        .getAccount()
+        .then((res) => {
+          console.log("getAccount", res);
+        })
+        .then(() => {
+          bsv.requestAccount().then((res) => {
+            console.log("requestAccount", res);
+          });
+        });
+
       // bsv.transferBsv({
       //     receivers: [
       //       {

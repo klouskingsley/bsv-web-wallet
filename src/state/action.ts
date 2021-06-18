@@ -227,6 +227,9 @@ export async function runIframeTask() {
     handleRequest('logout', async () => {
         saveAccountStorage(null)
     })
+    handleRequest('ping', () => {
+        return null;
+    })
 
     for (;;) {
         const signed = await requestLatestData()
