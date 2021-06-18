@@ -128,8 +128,25 @@ function LoginPanel() {
   const [form] = Form.useForm();
 
   const handleOnFinish = () => {
-    const account = form.getFieldsValue();
-    actions.saveAccount(account);
+    Modal.confirm({
+      title: "安全注意",
+      content: (
+        <div>
+          Web钱包的私钥是通过用户的用户名和密码实时计算得到，不会上传服务器，也不会保存在本地(代码见
+          <a
+            href="https://github.com/klouskingsley/bsv-web-wallet"
+            target="_blank"
+          >
+            github
+          </a>
+          )。仅供方便用户测试之用，不适合存放大量资金，建议用户妥善保管用户名+密码组合以防资金丢失，或在使用完成之后将剩余资金转移。用户名+密码组合丢失(忘记，被盗等情形)会导致资产丢失
+        </div>
+      ),
+      onOk: () => {
+        const account = form.getFieldsValue();
+        actions.saveAccount(account);
+      },
+    });
   };
   if (account) {
     return null;
@@ -722,6 +739,7 @@ function App() {
   }, !!requestAccountCondition);
   useOnceCall(() => {
     const data = getHashData();
+    console.log("bsv hash data", data);
     if (!data || data.data.type !== "request") {
       return;
     }
@@ -744,6 +762,7 @@ function App() {
   }, !!transferBsvCondition);
   useOnceCall(() => {
     const data = getHashData();
+    console.log("hashdata", data);
     if (!data || data.data.type !== "request") {
       return;
     }
@@ -757,7 +776,9 @@ function App() {
       (prev, cur) => prev + cur.amount,
       0
     );
+    console.log("outputTotal", outputTotal);
     const ft = sensibleFtList.find((item) => item.genesis === params.genesis);
+    console.log("ft", ft);
     if (!ft) {
       handlePopResponseCallback({ error: "insufficient balance" });
       return;
@@ -766,6 +787,7 @@ function App() {
       handlePopResponseCallback({ error: "insufficient balance" });
       return;
     }
+    setTransfering(true);
     setTrasferSensibleFtGenesis(params.genesis);
     setInitReceivers(params.receivers);
   }, !!transferBsvCondition);
