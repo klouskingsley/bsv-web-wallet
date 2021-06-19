@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "main": "dist/public-api.js",
-  "homepage": "https://klouskingsley.github.io/bsv-web-wallet",
+  "homepage": ".",
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
     "@testing-library/jest-dom": "^5.11.9",
