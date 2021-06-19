@@ -136,6 +136,7 @@ function LoginPanel() {
           <a
             href="https://github.com/klouskingsley/bsv-web-wallet"
             target="_blank"
+            rel="noreferrer"
           >
             github
           </a>

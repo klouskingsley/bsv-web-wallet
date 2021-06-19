@@ -512,6 +512,7 @@ export function parseTransaction(network: NetWork, rawtx: string) {
                 symbol: ftToken.tokenSymbol,
             }
         }
+        return ret
     })
     const outputs = tx.outputs.map((output: any, index: number) => {
         const ftToken: any = parseTokenContractScript(output.script.toBuffer(), network);
