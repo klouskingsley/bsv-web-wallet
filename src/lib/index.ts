@@ -6,6 +6,7 @@ import {SensibleFT} from 'sensible-sdk'
 import * as tokenProto from 'sensible-sdk/dist/bcp02/tokenProto'
 import * as protoHeader from 'sensible-sdk/dist/bcp02/protoheader'
 import { getCodeHash } from 'sensible-sdk/dist/common/utils';
+import * as util from './util'
 
 function getSensibleApiPrefix(network: NetWork) {
     const test = network === NetWork.Mainnet ? '' : '/test'
@@ -195,6 +196,7 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
         signerSelecteds: selectRes.signerSelecteds,
         signers: selectRes.signers,
     })
+    console.log('transferSensibleFt', receivers, network, codehash, genesis)
 
     try {
         const {txid, tx} = await ft.transfer({
@@ -335,11 +337,11 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     console.log('arguments', network, senderWif, receivers)
     const address = new bsv.PrivateKey(senderWif, network).toAddress(network)
     const balance = await getAddressBsvBalance(network, address)
-    const totalOutput = receivers.reduce((prev, cur) => prev + cur.amount, 0)
-    if (balance < totalOutput) {
+    const totalOutput = receivers.reduce((prev: any, cur) => util.plus(prev, cur.amount), 0)
+    if (balance < +totalOutput) {
         throw new Error('Insufficient_Balance')
     }
-    let utxoValue = 0
+    let utxoValue: number | string = 0
     let selectedUtxoList = []
 
     const tx = new bsv.Transaction()
@@ -353,7 +355,7 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
         const utxoResList = await getAddressBsvUtxoList(network, address, page)
         for (let i = 0; i < utxoResList.length; i++) {
             const item = utxoResList[i]
-            utxoValue += item.satoshis
+            utxoValue = util.plus(utxoValue, item.satoshis)
             selectedUtxoList.push(item)
             tx.addInput(
                 new bsv.Transaction.Input.PublicKeyHash({
@@ -366,24 +368,24 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
                     script: bsv.Script.empty(),
                 })
             );
-            if (totalOutput <= utxoValue) {
+            if (+totalOutput <= +utxoValue) {
                 break
             }
         }
-        if (totalOutput <= utxoValue) {
+        if (+totalOutput <= +utxoValue) {
             break
         }
     }
     receivers.forEach(item => {
-        tx.to(item.address, item.amount)
+        tx.to(item.address, +item.amount)
     })
-    if (utxoValue - totalOutput > 0) {
+    if (+util.minus(utxoValue, +totalOutput) > 0) {
         tx.change(address)
     }
-    if (utxoValue + tx.getFee() + dust > totalOutput) {
+    if (+util.minus(util.plus(utxoValue, tx.getFee(), dust), +totalOutput) > 0) {
         tx.clearOutputs()
         receivers.forEach(item => {
-            tx.to(item.address, item.amount)
+            tx.to(item.address, +item.amount)
         })
     }
     tx.inputs.forEach((_: any, inputIndex: number) => {

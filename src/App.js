@@ -37,6 +37,7 @@ import { useGlobalState, defaultSatotx } from "./state/state";
 import * as actions from "./state/action";
 import { useOnceCall } from "./hooks";
 import "./App.css";
+import * as util from "./lib/util";
 
 const { Option } = Select;
 
@@ -376,7 +377,7 @@ function TransferPanel({
       initReceivers.map((item) => {
         return {
           address: item.address,
-          amount: item.amount / 10 ** decimal,
+          amount: util.multi(item.amount, util.getDecimalString(decimal)),
         };
       })
     );
@@ -384,7 +385,7 @@ function TransferPanel({
       receiverList: initReceivers.map((item) => {
         return {
           address: item.address,
-          amount: item.amount / 10 ** decimal,
+          amount: util.div(item.amount, util.getDecimalString(decimal)),
         };
       }),
     });
@@ -413,29 +414,26 @@ function TransferPanel({
 
   const handleSubmit = async () => {
     const { receiverList } = form.getFieldsValue();
-    const totalOutputValue =
-      receiverList.reduce((prev, cur) => prev + cur.amount, 0) * 10 ** decimal;
-    if (balance < totalOutputValue) {
-      const msg = "Insufficient balance";
+    const totalOutputValueFloatDuck = receiverList.reduce(
+      (prev, cur) => util.plus(prev, cur.amount),
+      0
+    );
+
+    const totalOutputValue = util.multi(
+      totalOutputValueFloatDuck,
+      util.getDecimalString(decimal)
+    );
+    if (balance < +totalOutputValue) {
+      const msg = "Insufficient ft balance";
       onTransferCallback({
         error: msg,
       });
       return message.error(msg);
     }
-
-    // 不存在的话，使用默认的 api.satotx.com
-    // if (!isBsv && !satotxConfigMap.has(genesis)) {
-    //   const msg = "Token rabin signer not set yet";
-    //   onTransferCallback({
-    //     error: msg,
-    //   });
-    //   return message.error(msg);
-    // }
-
     const formatReceiverList = receiverList.map((item) => {
       return {
         address: item.address,
-        amount: item.amount * 10 ** decimal,
+        amount: util.multi(item.amount, util.getDecimalString(decimal)),
       };
     });
 
@@ -755,11 +753,11 @@ function App() {
     }
     // balance check
     const outputTotal = params.receivers.reduce(
-      (prev, cur) => prev + cur.amount,
+      (prev, cur) => util.plus(prev, cur.amount),
       0
     );
     if (outputTotal >= bsvBalance.balance) {
-      handlePopResponseCallback({ error: "insufficient balance" });
+      handlePopResponseCallback({ error: "insufficient bsv balance" });
       return;
     }
     setTransfering(true);
@@ -778,18 +776,18 @@ function App() {
     }
     // sensibleft balance check
     const outputTotal = params.receivers.reduce(
-      (prev, cur) => prev + cur.amount,
+      (prev, cur) => util.plus(prev, cur.amount),
       0
     );
     console.log("outputTotal", outputTotal);
     const ft = sensibleFtList.find((item) => item.genesis === params.genesis);
     console.log("ft", ft);
     if (!ft) {
-      handlePopResponseCallback({ error: "insufficient balance" });
+      handlePopResponseCallback({ error: "insufficient ft balance" });
       return;
     }
-    if (outputTotal >= ft.balance) {
-      handlePopResponseCallback({ error: "insufficient balance" });
+    if (+outputTotal >= +ft.balance) {
+      handlePopResponseCallback({ error: "insufficient ft balance" });
       return;
     }
     setTransfering(true);
