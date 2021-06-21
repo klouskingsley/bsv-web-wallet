@@ -797,8 +797,10 @@ function App() {
     setInitReceivers(params.receivers);
   }, !!transferBsvCondition);
   useEffect(() => {
-    window.onbeforeunload = function () {
+    const obu = window.onbeforeunload;
+    window.onbeforeunload = function (event) {
       handlePopResponseCallback({ error: "use closed" });
+      return obu(event);
     };
   });
 

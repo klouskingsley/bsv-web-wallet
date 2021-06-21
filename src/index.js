@@ -18,6 +18,18 @@ if (isIframe) {
   actions.runIframeTask();
 }
 
+// delete account when page/iframe exit
+(function () {
+  const obu = window.onbeforeunload;
+  window.onbeforeunload = function (event) {
+    const isPopup = !!window.opener;
+    if (!isPopup) {
+      actions.saveAccount(null);
+    }
+    return obu(event);
+  };
+})();
+
 // alert(window === window.top);
 
 // If you want to start measuring performance in your app, pass a function
