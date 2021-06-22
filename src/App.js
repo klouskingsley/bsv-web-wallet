@@ -67,7 +67,7 @@ function Header() {
 
   return (
     <div className="header">
-      <div className="logo">Web Wallet</div>
+      <div className="logo">Web Wallet return</div>
       {account && (
         <Popover
           title=""
@@ -455,7 +455,7 @@ function TransferPanel({
           error: msg,
         });
         console.log("broadcast bsv error ");
-        console.error(err)
+        console.error(err);
         message.error(err.toString());
       }
       setLoading(false);
