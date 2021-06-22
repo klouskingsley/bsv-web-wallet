@@ -799,7 +799,7 @@ function App() {
     const obu = window.onbeforeunload;
     window.onbeforeunload = function (event) {
       handlePopResponseCallback({ error: "use closed" });
-      return obu(event);
+      return obu && obu(event);
     };
   });
 
