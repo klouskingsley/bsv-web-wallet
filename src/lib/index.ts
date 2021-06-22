@@ -201,6 +201,13 @@ export async function broadcastSensibleQeury(network: NetWork, rawtx: string) {
 
 
 // 发送 token 交易
+const mapBsvFeeError = (err: Error) => {
+    if (err.message === "Insufficient balance.") {
+        // 将模糊的错误信息转换
+        return new Error('Low bsv balance to pay miners')
+    }
+    return err
+}
 export async function transferSensibleFt(network: NetWork, signers: SensibleSatotx[], senderWif: string, receivers: TransferReceiver[], codehash: string, genesis: string){
     const selectRes = await SensibleFT.selectSigners()
     const ft = new SensibleFT({
@@ -224,7 +231,8 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
             txid,
             outputs: txParseRes.outputs,
         }
-    } catch (err) {
+    } catch (_err) {
+        const err = mapBsvFeeError(_err)
         const errMsg = err.toString();
         const isBsvAmountExceed =
           errMsg.indexOf(
@@ -262,7 +270,8 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
                     txid,
                     outputs: txParseRes.outputs,
                 }
-            } catch (err) {
+            } catch (_err) {
+                const err = mapBsvFeeError(_err)
                 console.log('ft transfer fail after bsv utxo merge')
                 console.error(err)
                 const errMsg = err.toString()
@@ -301,13 +310,13 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
                     txid,
                     outputs: txParseRes.outputs,
                 }
-            } catch (err) {
+            } catch (_err) {
+                const err = mapBsvFeeError(_err)
                 console.log('ft transfer fail after ft utxo merge')
                 console.error(err)
                 throw err
             }
         }
-
     } 
 }
 
