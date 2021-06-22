@@ -26,7 +26,7 @@ if (isIframe) {
     if (!isPopup) {
       actions.saveAccount(null);
     }
-    return obu(event);
+    return obu && obu(event);
   };
 })();
 

@@ -382,11 +382,11 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
                     script: bsv.Script.empty(),
                 })
             );
-            if (+totalOutput <= +utxoValue) {
+            if (+totalOutput <= +util.plus(utxoValue, dust)) {
                 break
             }
         }
-        if (+totalOutput <= +utxoValue) {
+        if (+totalOutput <= +util.plus(utxoValue, dust)) {
             break
         }
         if (utxoResList.length <= 0 ) {
@@ -399,7 +399,8 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     if (+util.minus(utxoValue, +totalOutput) > 0) {
         tx.change(address)
     }
-    if (+util.minus(util.plus(utxoValue, tx.getFee(), dust), +totalOutput) > 0) {
+    // 如果 (utxo输入 - fee - 所有输出) = 找零 < dust，那么全部转出
+    if (+util.minus(utxoValue, tx.getFee(), totalOutput) < dust) {
         // 全部转出
         tx.clearOutputs()
         receivers.forEach((item, index) => {
@@ -421,6 +422,7 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     return {
         txid,
         outputs: txParseRes.outputs,
+        fee: tx.getFee()
     }
 }
 
