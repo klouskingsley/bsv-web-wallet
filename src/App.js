@@ -454,7 +454,8 @@ function TransferPanel({
         onTransferCallback({
           error: msg,
         });
-        console.log("broadcast bsv error ", err);
+        console.log("broadcast bsv error ");
+        console.error(err)
         message.error(err.toString());
       }
       setLoading(false);
@@ -756,7 +757,7 @@ function App() {
       (prev, cur) => util.plus(prev, cur.amount),
       0
     );
-    if (outputTotal >= bsvBalance.balance) {
+    if (outputTotal > bsvBalance.balance) {
       handlePopResponseCallback({ error: "insufficient bsv balance" });
       return;
     }

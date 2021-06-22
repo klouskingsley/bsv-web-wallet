@@ -1,5 +1,5 @@
 import {setGlobalState, getGlobalState } from './state'
-import {generateKeysFromEmailPassword, getAddressSensibleFtList, getAddressBsvBalance} from '../lib'
+import {generateKeysFromEmailPassword, getAddressSensibleFtList, getAddressBsvBalanceByUtxo} from '../lib'
 import {Account, BalanceBsv, Key, SensibleFt} from './stateType'
 import * as createPostMsg from 'post-msg';
 
@@ -31,7 +31,7 @@ export async function pollingBsvBalance(){
             return
         }
         try {
-            const balance = await getAddressBsvBalance(account.network, key.address)
+            const balance = await getAddressBsvBalanceByUtxo(account.network, key.address)
             setGlobalState('bsvBalance', {balance})
         } catch (err) {
             console.log('getAddressBsvBalance err', account.network, key.address, err)
@@ -144,7 +144,7 @@ export async function runIframeTask() {
             // get balance
             accountKey = generateKeysFromEmailPassword(preAccount.email, preAccount.password, preAccount.network)
             try {
-                const latestBalance = await getAddressBsvBalance(preAccount.network, accountKey.address)
+                const latestBalance = await getAddressBsvBalanceByUtxo(preAccount.network, accountKey.address)
                 const equal = isBsvBalanceEqual(preBsvBalance, {balance: latestBalance})
                 preBsvBalance = {balance: latestBalance}
                 if (!equal) {

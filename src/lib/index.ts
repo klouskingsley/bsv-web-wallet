@@ -142,7 +142,7 @@ export async function getAddressBsvUtxoList(network: NetWork, address: string, p
     throw new Error(data.msg)
 }
 
-// 获取bsv 余额
+// 获取bsv 余额, 这里加入了ft utxo的值，暂时不能用
 export async function getAddressBsvBalance(network: NetWork, address: string): Promise<number> {
     const apiPrefix = getSensibleApiPrefix(network)
     const {data} = await axios.get(`${apiPrefix}/address/${address}/balance`)
@@ -151,6 +151,20 @@ export async function getAddressBsvBalance(network: NetWork, address: string): P
         return data.data.satoshi + data.data.pendingSatoshi
     }
     throw new Error(data.msg)
+}
+
+export async function getAddressBsvBalanceByUtxo(network: NetWork, address: string): Promise<number> {
+    let page = 1
+    let sum = 0
+    for (;;) {
+        const utxoList = await getAddressBsvUtxoList(network, address, page)
+        sum = utxoList.reduce((prev, cur) => prev + cur.satoshis, sum)
+        if (utxoList.length === 0) {
+            break
+        }
+        page++
+    }
+    return sum
 }
 
 // 获取 sensible ft 余额
@@ -336,7 +350,7 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     // 4. 广播交易
     console.log('arguments', network, senderWif, receivers)
     const address = new bsv.PrivateKey(senderWif, network).toAddress(network)
-    const balance = await getAddressBsvBalance(network, address)
+    const balance = await getAddressBsvBalanceByUtxo(network, address)
     const totalOutput = receivers.reduce((prev: any, cur) => util.plus(prev, cur.amount), 0)
     if (balance < +totalOutput) {
         throw new Error('Insufficient_Balance')
@@ -375,6 +389,9 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
         if (+totalOutput <= +utxoValue) {
             break
         }
+        if (utxoResList.length <= 0 ) {
+            break
+        }
     }
     receivers.forEach(item => {
         tx.to(item.address, +item.amount)
@@ -383,9 +400,16 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
         tx.change(address)
     }
     if (+util.minus(util.plus(utxoValue, tx.getFee(), dust), +totalOutput) > 0) {
+        // 全部转出
         tx.clearOutputs()
-        receivers.forEach(item => {
-            tx.to(item.address, +item.amount)
+        receivers.forEach((item, index) => {
+            
+            if (receivers.length === index + 1) {
+                // 最后一个使用 change
+                tx.change(item.address)
+            } else {
+                tx.to(item.address, +item.amount)
+            }
         })
     }
     tx.inputs.forEach((_: any, inputIndex: number) => {
