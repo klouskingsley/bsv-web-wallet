@@ -787,7 +787,7 @@ function App() {
       handlePopResponseCallback({ error: "insufficient ft balance" });
       return;
     }
-    if (+outputTotal >= +ft.balance) {
+    if (+outputTotal > +ft.balance) {
       handlePopResponseCallback({ error: "insufficient ft balance" });
       return;
     }
