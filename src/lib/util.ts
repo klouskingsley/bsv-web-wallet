@@ -1,4 +1,5 @@
 import BigNumber from "bignumber.js";
+import {message} from 'antd'
 
 // 最大是253，那么全部用 string 吧
 type NumberDuck = number | string
@@ -57,6 +58,17 @@ export function greaterThan(a: NumberDuck, b: NumberDuck):boolean {
 export function greaterThanEqual(a: NumberDuck, b: NumberDuck):boolean {
     let biga = new BigNumber(a)
     return biga.gte(new BigNumber(b))
+}
+
+export function checkFeeRate(tx: any, minFeeRate?: number) {
+    minFeeRate = minFeeRate || 0.5
+    const size = tx.toBuffer().length
+    const feeRate = tx.getFee() / size;
+    if (feeRate < minFeeRate) {
+        const msg = `The fee rate should not be less than ${minFeeRate}, but in the end it is ${feeRate}`
+        message.error(msg)
+        throw new Error(msg)
+    }
 }
 
 // 传过来 string/int -> 显示(float) -> bigint

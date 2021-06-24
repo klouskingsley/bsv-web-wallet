@@ -227,6 +227,7 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
             codehash,
             genesis,
         })
+        util.checkFeeRate(tx)
         const txParseRes = parseTransaction(network, tx.serialize(true))
         return {
             txid,
@@ -266,6 +267,7 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
                     codehash,
                     genesis,
                 })
+                util.checkFeeRate(tx)
                 const txParseRes = parseTransaction(network, tx.serialize(true))
                 return {
                     txid,
@@ -286,11 +288,12 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
         if (isFtUtxoAmountExceed) {
             // merge utxo
             try {
-                await ft.merge({
+                const {tx} = await ft.merge({
                     ownerWif: senderWif,
                     codehash,
                     genesis,
                 })
+                util.checkFeeRate(tx)
                 await sleep(3000)
             } catch (err) {
                 console.log('merge ft utxo fail')
@@ -306,6 +309,7 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
                     codehash,
                     genesis,
                 })
+                util.checkFeeRate(tx)
                 const txParseRes = parseTransaction(network, tx.serialize(true))
                 return {
                     txid,
@@ -427,6 +431,7 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
         const privateKey = new bsv.PrivateKey(senderWif)
         unlockP2PKHInput(privateKey, tx, inputIndex, sighashType);
     });
+    util.checkFeeRate(tx)
     const txid = await broadcastSensibleQeury(network, tx.serialize())
     const txParseRes = parseTransaction(network, tx.serialize(true))
     return {
@@ -458,6 +463,7 @@ export async function mergeBsvUtxo(network: NetWork, senderWif: string) {
         const privateKey = new bsv.PrivateKey(senderWif)
         unlockP2PKHInput(privateKey, tx, inputIndex, sighashType)
     })
+    util.checkFeeRate(tx)
     const txid = await broadcastSensibleQeury(network, tx.serialize())
     const txParseRes = parseTransaction(network, tx.serialize(true))
     return {
