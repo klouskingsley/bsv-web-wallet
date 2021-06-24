@@ -196,7 +196,7 @@ export async function broadcastSensibleQeury(network: NetWork, rawtx: string) {
     if (success) {
         return new bsv.Transaction(rawtx).hash
     }
-    return new Error(data.msg)
+    throw new Error(data.msg)
 }
 
 
@@ -254,7 +254,7 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
             } catch (err) {
                 console.log('merge bsv utxo fail')
                 console.error(err)
-                
+                throw err
             }
 
             // merge 后重新发起 ft transfer 交易
