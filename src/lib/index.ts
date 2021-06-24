@@ -370,7 +370,7 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     if (util.lessThan(balance, totalOutput)) {
         throw new Error('Insufficient_Balance')
     }
-    let utxoValue: number | string = 0
+    let utxoValue: string = '0'
     let selectedUtxoList = []
 
     const tx = new bsv.Transaction()
