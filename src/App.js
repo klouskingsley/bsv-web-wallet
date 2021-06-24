@@ -423,7 +423,7 @@ function TransferPanel({
       totalOutputValueFloatDuck,
       util.getDecimalString(decimal)
     );
-    if (balance < +totalOutputValue) {
+    if (util.lessThan(balance, totalOutputValue)) {
       const msg = "Insufficient ft balance";
       onTransferCallback({
         error: msg,
@@ -715,7 +715,9 @@ function App() {
   // todo 此处接收 postMessage 消息，处理登录,transfer
   const requestAccountCondition = key?.address && account?.network;
   const transferBsvCondition =
-    requestAccountCondition && bsvBalance && bsvBalance.balance >= 0;
+    requestAccountCondition &&
+    bsvBalance &&
+    util.greaterThanEqual(bsvBalance.balance, 0);
   useOnceCall(() => {
     const data = getHashData();
     if (!data || data.data.type !== "request") {
@@ -757,7 +759,7 @@ function App() {
       (prev, cur) => util.plus(prev, cur.amount),
       0
     );
-    if (outputTotal > bsvBalance.balance) {
+    if (util.greaterThan(outputTotal, bsvBalance.balance)) {
       handlePopResponseCallback({ error: "insufficient bsv balance" });
       return;
     }
@@ -787,7 +789,7 @@ function App() {
       handlePopResponseCallback({ error: "insufficient ft balance" });
       return;
     }
-    if (+outputTotal > +ft.balance) {
+    if (util.greaterThan(outputTotal, ft.balance)) {
       handlePopResponseCallback({ error: "insufficient ft balance" });
       return;
     }

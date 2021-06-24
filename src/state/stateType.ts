@@ -13,7 +13,7 @@ export interface Key {
 }
 
 export interface BalanceBsv {
-    balance: number
+    balance: string
 }
 
 export interface SensibleSatotx {
@@ -27,7 +27,7 @@ export interface SensibleFt {
     tokenName: string
     tokenSymbol: string
     tokenDecimal: number
-    balance: number
+    balance: string
     satotx: SensibleSatotx | null
 }
 

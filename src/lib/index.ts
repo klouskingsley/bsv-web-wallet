@@ -23,7 +23,8 @@ function sleep(ms: number) {
 export function formatValue(value: number, decimal: number) {
     // const bigNum = bsv.crypto.BN.fromNumber(value)
     // return bigNum.div(10**decimal).toString(10)
-    return value / (10**decimal)
+    // return value / (10**decimal)
+    return util.div(value, util.getDecimalString(decimal))
 }
 
 export function isValidAddress(network: NetWork, address: string) {
@@ -115,7 +116,7 @@ export async function getAddressSensibleFtList(network: NetWork, address: string
                 tokenName: item.name,
                 tokenSymbol: item.symbol,
                 tokenDecimal: item.decimal,
-                balance: item.balance + item.pendingBalance,
+                balance: util.plus(item.balance, item.pendingBalance),
             }
         })
     }
@@ -143,22 +144,22 @@ export async function getAddressBsvUtxoList(network: NetWork, address: string, p
 }
 
 // 获取bsv 余额, 这里加入了ft utxo的值，暂时不能用
-export async function getAddressBsvBalance(network: NetWork, address: string): Promise<number> {
+export async function getAddressBsvBalance(network: NetWork, address: string): Promise<number | string> {
     const apiPrefix = getSensibleApiPrefix(network)
     const {data} = await axios.get(`${apiPrefix}/address/${address}/balance`)
     const success = isSensibleSuccess(data)
     if (success) {
-        return data.data.satoshi + data.data.pendingSatoshi
+        return util.plus(data.data.satoshi, data.data.pendingSatoshi)
     }
     throw new Error(data.msg)
 }
 
-export async function getAddressBsvBalanceByUtxo(network: NetWork, address: string): Promise<number> {
+export async function getAddressBsvBalanceByUtxo(network: NetWork, address: string): Promise<string> {
     let page = 1
-    let sum = 0
+    let sum: string = '0'
     for (;;) {
         const utxoList = await getAddressBsvUtxoList(network, address, page)
-        sum = utxoList.reduce((prev, cur) => prev + cur.satoshis, sum)
+        sum += utxoList.reduce((prev: any, cur: any) => util.plus(prev, cur.satoshis), '0')
         if (utxoList.length === 0) {
             break
         }
@@ -360,8 +361,8 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     console.log('arguments', network, senderWif, receivers)
     const address = new bsv.PrivateKey(senderWif, network).toAddress(network)
     const balance = await getAddressBsvBalanceByUtxo(network, address)
-    const totalOutput = receivers.reduce((prev: any, cur) => util.plus(prev, cur.amount), 0)
-    if (balance < +totalOutput) {
+    const totalOutput = receivers.reduce((prev: any, cur) => util.plus(prev, cur.amount), '0')
+    if (util.lessThan(balance, totalOutput)) {
         throw new Error('Insufficient_Balance')
     }
     let utxoValue: number | string = 0
@@ -391,11 +392,11 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
                     script: bsv.Script.empty(),
                 })
             );
-            if (+totalOutput <= +util.plus(utxoValue, dust)) {
+            if (util.lessThanEqual(totalOutput, util.plus(utxoValue, dust))) {
                 break
             }
         }
-        if (+totalOutput <= +util.plus(utxoValue, dust)) {
+        if (util.lessThanEqual(totalOutput, util.plus(utxoValue, dust))) {
             break
         }
         if (utxoResList.length <= 0 ) {
@@ -405,11 +406,11 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     receivers.forEach(item => {
         tx.to(item.address, +item.amount)
     })
-    if (+util.minus(utxoValue, +totalOutput) > 0) {
+    if (util.greaterThan(util.minus(utxoValue, +totalOutput), 0)) {
         tx.change(address)
     }
     // 如果 (utxo输入 - fee - 所有输出) = 找零 < dust，那么全部转出
-    if (+util.minus(utxoValue, tx.getFee(), totalOutput) < dust) {
+    if (util.lessThan(util.minus(utxoValue, tx.getFee(), totalOutput), dust)) {
         // 全部转出
         tx.clearOutputs()
         receivers.forEach((item, index) => {
