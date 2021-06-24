@@ -159,7 +159,8 @@ export async function getAddressBsvBalanceByUtxo(network: NetWork, address: stri
     let sum: string = '0'
     for (;;) {
         const utxoList = await getAddressBsvUtxoList(network, address, page)
-        sum += utxoList.reduce((prev: any, cur: any) => util.plus(prev, cur.satoshis), '0')
+        const total = utxoList.reduce((prev: any, cur: any) => util.plus(prev, cur.satoshis), '0')
+        sum = util.plus(sum, total)
         if (utxoList.length === 0) {
             break
         }
