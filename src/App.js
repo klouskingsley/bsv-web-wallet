@@ -38,6 +38,7 @@ import * as actions from "./state/action";
 import { useOnceCall } from "./hooks";
 import "./App.css";
 import * as util from "./lib/util";
+import * as Sentry from "@sentry/react";
 
 const { Option } = Select;
 
@@ -451,6 +452,18 @@ function TransferPanel({
         txid = res.txid;
       } catch (err) {
         const msg = "broadcast error: " + err.toString();
+        console.log(
+          JSON.stringify({
+            msg,
+            account: {
+              network: account.network,
+              address: key.address,
+            },
+            receivers: formatReceiverList,
+          })
+        );
+        Sentry.captureException(err);
+        Sentry.captureMessage(`bsvTransferFail_${key.address}`);
         onTransferCallback({
           error: msg,
         });
@@ -460,6 +473,17 @@ function TransferPanel({
       }
       setLoading(false);
       if (txid) {
+        console.log(
+          JSON.stringify({
+            account: {
+              network: account.network,
+              address: key.address,
+            },
+            receivers: formatReceiverList,
+            txid,
+          })
+        );
+        Sentry.captureMessage(`bsvTransferSuccess_${key.address}_${txid}`);
         onTransferCallback({
           response: {
             ...transferRes,
@@ -507,9 +531,41 @@ function TransferPanel({
         console.log("broadcast sensible ft error ");
         console.error(err);
         message.error(err.toString());
+        console.log(
+          JSON.stringify({
+            msg: JSON.stringify(err.message),
+            account: {
+              network: account.network,
+              address: key.address,
+            },
+            genesis: token.genesis,
+            codehash: token.codehash,
+            receivers: formatReceiverList,
+          })
+        );
+        Sentry.captureException(err);
+        Sentry.captureMessage(
+          `ftTransferFail_${key.address}_${token.genesis}_${token.genesis}`
+        );
+        onTransferCallback({
+          error: err.toString(),
+        });
       }
       setLoading(false);
       if (txid) {
+        console.log(
+          JSON.stringify({
+            account: {
+              network: account.network,
+              address: key.address,
+              genesis: token.genesis,
+              codehash: token.codehash,
+            },
+            receivers: formatReceiverList,
+            txid,
+          })
+        );
+        Sentry.captureMessage(`ftTransferSuccess_${key.address}_${txid}`);
         onTransferCallback({
           response: {
             ...transferRes,
