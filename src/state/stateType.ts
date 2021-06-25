@@ -48,5 +48,5 @@ export interface BsvUtxo{
     txId:string 
     outputIndex: number
     satoshis: number
-    address:number
+    address: string
 }

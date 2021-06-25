@@ -7,6 +7,7 @@ import * as tokenProto from 'sensible-sdk/dist/bcp02/tokenProto'
 import * as protoHeader from 'sensible-sdk/dist/bcp02/protoheader'
 import { getCodeHash } from 'sensible-sdk/dist/common/utils';
 import * as util from './util'
+import * as Sentry from "@sentry/react";
 
 function getSensibleApiPrefix(network: NetWork) {
     const test = network === NetWork.Mainnet ? '' : '/test'
@@ -140,6 +141,38 @@ export async function getAddressBsvUtxoList(network: NetWork, address: string, p
             }
         })
     }
+
+    // const fakeUtxoList: BsvUtxo[] = [
+    //     {
+    //         txId: '6a18f5b859fb4c281affaf8f6245a2fe0813867d4b7d24948da18e099462619b',
+    //         outputIndex: 0,
+    //         satoshis: 98775,
+    //         address,
+    //     },
+    //     {
+    //         txId: 'de980facfe7b10a84bfa658130b2b7725565510f967534459d63e6c9717a08e2',
+    //         outputIndex: 0,
+    //         satoshis: 98679,
+    //         address,
+    //     },
+    //     {
+    //         txId: '8ace8ab3995de63af867d929561b3a48bb499ea8d6e64c2ecefba29c6213764f',
+    //         outputIndex: 4,
+    //         satoshis: 4939535,
+    //         address,
+    //     },
+    //     {
+    //         txId: '74bec534becb77f894bcacaf2386604642a1ea00e371838b1780f5235a12bb9d',
+    //         outputIndex: 2,
+    //         satoshis: 45033315,
+    //         address,
+    //     }
+    // ]
+    // if (page === 1) {
+    //     return fakeUtxoList
+    // }
+    // return []
+    
     throw new Error(data.msg)
 }
 
@@ -166,6 +199,7 @@ export async function getAddressBsvBalanceByUtxo(network: NetWork, address: stri
         }
         page++
     }
+    console.log('balance', sum)
     return sum
 }
 
@@ -358,6 +392,29 @@ export function unlockP2PKHInput(privateKey: bsv.PrivateKey, tx: bsv.Transaction
   }
 
 // 发送 bsv 交易
+function checkBsvReceiversSatisfied(receivers: TransferReceiver[], tx: any, network: NetWork) {
+    let satified = true
+    const txAddressAmountMap: {[key: string]: number} = {}
+    const getKey = (address: string, amount: any) => {
+        return `${address}_${util.toString(amount)}`
+    }
+    tx.outputs.forEach((output: any) => {
+        const address = output.script.toAddress(network);
+        const amount = output.satoshis
+        const key = getKey(address, amount)
+        txAddressAmountMap[key] = (txAddressAmountMap[key] || 0) + 1
+    })
+    for (let i = 0; i < receivers.length; i++) {
+        const rece = receivers[i]
+        const key = getKey(rece.address, rece.amount)
+        if (!txAddressAmountMap[key]) {
+            satified = false
+            break
+        }
+        txAddressAmountMap[key] = txAddressAmountMap[key] - 1
+    }
+    return satified
+}
 export async function transferBsv(network: NetWork, senderWif: string, receivers: TransferReceiver[]) {
     // 1. 获取用户 utxo 列表
     // 2. 判断 utxo 金额 是否 满足 receivers 金额
@@ -368,7 +425,7 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     const balance = await getAddressBsvBalanceByUtxo(network, address)
     const totalOutput = receivers.reduce((prev: any, cur) => util.plus(prev, cur.amount), '0')
     if (util.lessThan(balance, totalOutput)) {
-        throw new Error('Insufficient_Balance')
+        throw new Error('Insufficient_bsv_Balance')
     }
     let utxoValue: string = '0'
     let selectedUtxoList = []
@@ -397,11 +454,11 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
                     script: bsv.Script.empty(),
                 })
             );
-            if (util.lessThanEqual(totalOutput, util.plus(utxoValue, dust))) {
+            if (util.lessThanEqual(util.plus(totalOutput, dust), utxoValue)) {
                 break
             }
         }
-        if (util.lessThanEqual(totalOutput, util.plus(utxoValue, dust))) {
+        if (util.lessThanEqual(util.plus(totalOutput, dust), utxoValue)) {
             break
         }
         if (utxoResList.length <= 0 ) {
@@ -435,6 +492,17 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     util.checkFeeRate(tx)
     const txid = await broadcastSensibleQeury(network, tx.serialize())
     const txParseRes = parseTransaction(network, tx.serialize(true))
+
+    const amountSatified = checkBsvReceiversSatisfied(receivers, tx, network)
+    if (!amountSatified) {
+        console.log(JSON.stringify({
+            type: 'bsvTransferAmountNotSatified',
+            txid: tx.hash,
+            receivers,
+            outputs: txParseRes.outputs,
+        }))
+        Sentry.captureMessage(`bsvTransferAmountNotSatified_${address}_${tx.hash}`);
+    }
     return {
         txid,
         outputs: txParseRes.outputs,

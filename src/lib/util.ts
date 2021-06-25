@@ -60,6 +60,15 @@ export function greaterThanEqual(a: NumberDuck, b: NumberDuck):boolean {
     return biga.gte(new BigNumber(b))
 }
 
+export function equal(a: NumberDuck, b: NumberDuck): boolean {
+    let biga = new BigNumber(a)
+    return biga.eq(new BigNumber(b))
+}
+
+export function toString(a: NumberDuck): string {
+    return new BigNumber(a).toString()
+}
+
 export function checkFeeRate(tx: any, minFeeRate?: number) {
     minFeeRate = minFeeRate || 0.5
     const size = tx.toBuffer().length
