@@ -217,7 +217,7 @@ function AccountInfoPanel({ onWithDraw, onTransfer }) {
   const [bsvBalance] = useGlobalState("bsvBalance");
   const [sensibleFtList] = useGlobalState("sensibleFtList");
 
-  if (!key) {
+  if (!key || !account) {
     return null;
   }
   const handleHistory = () => {
@@ -454,6 +454,7 @@ function TransferPanel({
         const msg = "broadcast error: " + err.toString();
         console.log(
           JSON.stringify({
+            type: "bsvTransferFail",
             msg,
             account: {
               network: account.network,
@@ -475,12 +476,14 @@ function TransferPanel({
       if (txid) {
         console.log(
           JSON.stringify({
+            type: "bsvTransferSuccess",
             account: {
               network: account.network,
               address: key.address,
             },
             receivers: formatReceiverList,
             txid,
+            ...transferRes,
           })
         );
         Sentry.captureMessage(`bsvTransferSuccess_${key.address}_${txid}`);
@@ -533,6 +536,7 @@ function TransferPanel({
         message.error(err.toString());
         console.log(
           JSON.stringify({
+            type: "ftTransferFail",
             msg: JSON.stringify(err.message),
             account: {
               network: account.network,
@@ -555,6 +559,7 @@ function TransferPanel({
       if (txid) {
         console.log(
           JSON.stringify({
+            type: "ftTransferSuccess,",
             account: {
               network: account.network,
               address: key.address,
@@ -563,6 +568,7 @@ function TransferPanel({
             },
             receivers: formatReceiverList,
             txid,
+            ...transferRes,
           })
         );
         Sentry.captureMessage(`ftTransferSuccess_${key.address}_${txid}`);
