@@ -495,7 +495,7 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
 
     const amountSatified = checkBsvReceiversSatisfied(receivers, tx, network)
     if (!amountSatified) {
-        console.log(JSON.stringify({
+        console.log(util.safeJsonStringify({
             type: 'bsvTransferAmountNotSatified',
             txid: tx.hash,
             receivers,

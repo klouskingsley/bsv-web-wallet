@@ -80,4 +80,12 @@ export function checkFeeRate(tx: any, minFeeRate?: number) {
     }
 }
 
+export function safeJsonStringify(data: any) {
+    return JSON.parse(JSON.stringify(data, (key, value) =>
+        typeof value === 'bigint'
+            ? value.toString()
+            : value // return everything else unchanged
+    ));
+}
+
 // 传过来 string/int -> 显示(float) -> bigint

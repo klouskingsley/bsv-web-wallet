@@ -453,7 +453,7 @@ function TransferPanel({
       } catch (err) {
         const msg = "broadcast error: " + err.toString();
         console.log(
-          JSON.stringify({
+          util.safeJsonStringify({
             type: "bsvTransferFail",
             msg,
             account: {
@@ -475,7 +475,7 @@ function TransferPanel({
       setLoading(false);
       if (txid) {
         console.log(
-          JSON.stringify({
+          util.safeJsonStringify({
             type: "bsvTransferSuccess",
             account: {
               network: account.network,
@@ -535,9 +535,9 @@ function TransferPanel({
         console.error(err);
         message.error(err.toString());
         console.log(
-          JSON.stringify({
+          util.safeJsonStringify({
             type: "ftTransferFail",
-            msg: JSON.stringify(err.message),
+            msg: util.safeJsonStringify(err.message),
             account: {
               network: account.network,
               address: key.address,
@@ -558,7 +558,7 @@ function TransferPanel({
       setLoading(false);
       if (txid) {
         console.log(
-          JSON.stringify({
+          util.safeJsonStringify({
             type: "ftTransferSuccess,",
             account: {
               network: account.network,
