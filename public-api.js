@@ -189,12 +189,18 @@ function Bsv({
       genesis,
     });
   };
+  const transferAll = function (datas) {
+    return openPopupAndRequest("transferAll", {
+      datas
+    })
+  }
 
   return {
     requestAccount,
     exitAccount: backIframe.logout,
     transferBsv,
     transferSensibleFt,
+    transferAll,
     getAccount: backIframe.getAccount,
     getAddress: backIframe.getAddress,
     getBsvBalance: backIframe.getBsvBalance,

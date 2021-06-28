@@ -352,6 +352,290 @@ function AccountInfoPanel({ onWithDraw, onTransfer }) {
   ];
 }
 
+function TransferAllPanel({
+  initDatas = [],
+  onCancel,
+  onTransferCallback,
+}) {
+  const [key] = useGlobalState("key");
+  const [bsvBalance] = useGlobalState("bsvBalance");
+  const [account] = useGlobalState("account");
+  const [sensibleFtList] = useGlobalState("sensibleFtList");
+  const [satotxConfigMap] = useGlobalState("satotxConfigMap");
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+
+  useOnceCall(() => {
+    initDatas.forEach((data, index) => {
+
+      const isBsv = !data.genesis;
+      const token = sensibleFtList.find((item) => item.genesis === data.genesis);
+      const decimal = isBsv ? 8 : token.tokenDecimal;
+      const values = {};
+      values[`receiverList${index}`] = data.receivers.map((item) => {
+        return {
+          address: item.address,
+          amount: util.div(item.amount, util.getDecimalString(decimal)),
+        };
+      })
+      form.setFieldsValue(values);
+
+    })
+  }, key && bsvBalance);
+
+  if (!key) {
+    return null;
+  }
+  if (!bsvBalance) {
+    return null;
+  }
+
+  const handleSubmit = async () => {
+    const receiverLists = form.getFieldsValue();
+
+
+    const broadcastBsv = async ({ formatReceiverList, token, decimal, genesis }) => {
+      setLoading(true);
+      let txid = "";
+      let transferRes;
+      try {
+        const res = await await transferBsv(
+          account.network,
+          key.privateKey,
+          formatReceiverList
+        );
+        transferRes = res;
+        txid = res.txid;
+      } catch (err) {
+        const msg = "broadcast error: " + err.toString();
+        onTransferCallback({
+          error: msg,
+        });
+        console.log("broadcast bsv error ");
+        console.error(err)
+        message.error(err.toString());
+      }
+      return transferRes
+    };
+
+    const broadcastSensibleFt = async ({ formatReceiverList, token, decimal, genesis }) => {
+      setLoading(true);
+      let txid = "";
+      let transferRes;
+      try {
+        const signers = satotxConfigMap.get(genesis) || [
+          defaultSatotx,
+          defaultSatotx,
+          defaultSatotx,
+        ];
+        const res = await transferSensibleFt(
+          account.network,
+          signers,
+          key.privateKey,
+          formatReceiverList,
+          token.codehash,
+          token.genesis
+        );
+        transferRes = res;
+        txid = res.txid;
+      } catch (err) {
+        console.log("broadcast sensible ft error ");
+        console.error(err);
+        message.error(err.toString());
+      }
+      return transferRes;
+    };
+
+    const broadcastAll = async () => {
+      const transferRes = [];
+      const txPromises = [];
+      initDatas.forEach(async (data, index) => {
+
+        const isBsv = !data.genesis;
+        const token = sensibleFtList.find((item) => item.genesis === data.genesis);
+        const decimal = isBsv ? 8 : token.tokenDecimal;
+        const balance = isBsv ? bsvBalance.balance : token.balance;
+        const totalOutputValueFloatDuck = receiverLists[`receiverList${index}`].reduce(
+          (prev, cur) => util.plus(prev, cur.amount),
+          0
+        );
+
+        const totalOutputValue = util.multi(
+          totalOutputValueFloatDuck,
+          util.getDecimalString(decimal)
+        );
+        if (balance < +totalOutputValue) {
+          const msg = "Insufficient ft balance";
+          onTransferCallback({
+            error: msg,
+          });
+          return message.error(msg);
+        }
+        const formatReceiverList = data.receivers.map((item) => {
+          return {
+            address: item.address,
+            // amount: util.multi(item.amount, util.getDecimalString(decimal)),
+            amount: item.amount
+          };
+        });
+        txPromises.push(isBsv ? broadcastBsv({ formatReceiverList, decimal }) : broadcastSensibleFt({ formatReceiverList, token, decimal, genesis: data.genesis }))
+
+      });
+      Promise.all(txPromises).then(res => {
+        transferRes.push(...res);
+        setLoading(false);
+        onTransferCallback({
+          response: {
+            ...transferRes,
+          },
+        });
+      })
+    }
+
+    Modal.confirm({
+      title: "Confirm the transaction",
+      onOk: () => {
+        broadcastAll()
+      },
+    });
+  };
+  const handleBack = () => {
+    onCancel();
+  };
+  return (
+    <Card
+      className="card"
+      title={
+        <div style={{ cursor: "pointer" }} onClick={handleBack}>
+          <LeftOutlined />
+          Transfer
+        </div>
+      }
+      loading={loading}
+      bordered={false}
+    >
+      <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        {initDatas.map((data, index) => {
+
+          const isBsv = !data.genesis;
+          const token = sensibleFtList.find((item) => item.genesis === data.genesis);
+
+          if (!isBsv && !token) {
+            return null;
+          }
+          const tokenSymbol = isBsv ? "BSV" : token.tokenSymbol;
+          const decimal = isBsv ? 8 : token.tokenDecimal;
+          const balance = isBsv ? bsvBalance.balance : token.balance;
+          const formatBalance = formatValue(balance, decimal);
+          const canEdit = !(data.receivers.length > 0);
+          return <div key={index}>
+
+            <div className="transfer-line">
+              {isBsv ? `Coin: ${tokenSymbol}` : `Token: ${tokenSymbol}`}
+            </div>
+            {!isBsv && (
+              <div className="transfer-line">Genesis: {token.genesis}</div>
+            )}
+            {!isBsv && (
+              <div className="transfer-line">Codehash: {token.codehash}</div>
+            )}
+            <Row justify="space-between" style={{ margin: "10px 0" }}>
+              <Col span={14}>
+                <div style={{ fontWeight: 700 }}>Input</div>
+              </Col>
+            </Row>
+            <div className="transfer-line">{`Balance: ${formatBalance}`}</div>
+            <div className="transfer-line">{`From Address: ${key.address}`}</div>
+            <Row justify="space-between" style={{ margin: "10px 0" }}>
+              <Col span={14}>
+                <div style={{ fontWeight: 700 }}>Output</div>
+              </Col>
+            </Row>
+            <Form.List name={`receiverList${index}`}>
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map((key, name, fieldKey, ...restField) => {
+                    return (
+                      <Space
+                        key={key.fieldKey}
+                        style={{ display: "flex", marginBottom: 8 }}
+                        align="baseline"
+                      >
+                        <Form.Item
+                          {...restField}
+                          name={[name, "address"]}
+                          fieldKey={[fieldKey, "address"]}
+                          rules={[
+                            {
+                              required: true,
+                              message: "Please input the address",
+                            },
+                            {
+                              message: "invalid address",
+                              validator: (_, value) =>
+                                isValidAddress(account.network, value)
+                                  ? Promise.resolve()
+                                  : Promise.reject(),
+                            },
+                          ]}
+                        >
+                          <Input
+                            placeholder="Input the address"
+                            disabled={!canEdit}
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          {...restField}
+                          name={[name, "amount"]}
+                          fieldKey={[fieldKey, "amount"]}
+                          rules={[
+                            { required: true, message: "Please input amount" },
+                          ]}
+                        >
+                          <InputNumber
+                            placeholder="Amount"
+                            min={0}
+                            disabled={!canEdit}
+                          />
+                        </Form.Item>
+                        <Button
+                          disabled={!canEdit}
+                          size="small"
+                          onClick={() => remove(name)}
+                          shape="circle"
+                          icon={<MinusOutlined />}
+                        />
+                      </Space>
+                    );
+                  })}
+
+                  <Form.Item>
+                    <Button
+                      type="dashed"
+                      onClick={() => add()}
+                      icon={<PlusOutlined />}
+                      disabled={!canEdit}
+                    >
+                      Add Output
+                </Button>
+                  </Form.Item>
+                </>
+              )}
+            </Form.List>
+
+          </div>
+        })}
+        <Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            Transfer
+          </Button>
+        </Form.Item>
+      </Form>
+    </Card>
+  );
+
+}
+
 function TransferPanel({
   genesis = "",
   initReceivers = [],
@@ -671,6 +955,7 @@ function App() {
   const [bsvBalance] = useGlobalState("bsvBalance");
   const [sensibleFtList] = useGlobalState("sensibleFtList");
   const [initReceivers, setInitReceivers] = useState([]);
+  const [initDatas, setInitDatas] = useState([]);
 
   const handleTransfer = (genesis) => {
     setTransfering(true);
@@ -693,7 +978,7 @@ function App() {
           return data;
         }
       }
-    } catch (err) {}
+    } catch (err) { }
     return null;
   };
   const handlePopResponseCallback = (resObj) => {
@@ -795,6 +1080,40 @@ function App() {
     setTrasferSensibleFtGenesis(params.genesis);
     setInitReceivers(params.receivers);
   }, !!transferBsvCondition);
+  useOnceCall(() => {
+    const data = getHashData();
+    console.log("bsv hash data", data);
+    if (!data || data.data.type !== "request") {
+      return;
+    }
+
+    const { method, params } = data.data.data;
+    if (method !== "transferAll") {
+      return;
+    }
+    // balance check
+    params.datas.forEach(item => {
+      // balance check
+      const isBsv = !item.genesis;
+      const ft = sensibleFtList.find((v) => v.genesis === item.genesis);
+
+      const outputTotal = item.receivers.reduce(
+        (prev, cur) => util.plus(prev, cur.amount),
+        0
+      );
+      if (isBsv && outputTotal > bsvBalance.balance) {
+        handlePopResponseCallback({ error: "insufficient bsv balance" });
+        return;
+      }
+      if (ft && +outputTotal >= +ft.balance) {
+        handlePopResponseCallback({ error: "insufficient ft balance" });
+        return;
+      }
+      setTransfering(true);
+      console.log(params.datas);
+      setInitDatas(params.datas);
+    })
+  }, !!transferBsvCondition);
   useEffect(() => {
     const obu = window.onbeforeunload;
     window.onbeforeunload = function (event) {
@@ -802,19 +1121,24 @@ function App() {
       return obu(event);
     };
   });
-
   return (
     <div className="App" style={{ overflow: "hidden" }}>
       <Header accountName="harry" />
       <LoginPanel />
       {!trasfering && <AccountInfoPanel onTransfer={handleTransfer} />}
       {trasfering && (
-        <TransferPanel
+        (!initDatas || initDatas.length < 1) ? <TransferPanel
           genesis={trasferSensibleFtGenesis}
           onCancel={handleCancelTransfer}
           onTransferCallback={handlePopResponseCallback}
           initReceivers={initReceivers}
         />
+          :
+          <TransferAllPanel
+            onCancel={handleCancelTransfer}
+            onTransferCallback={handlePopResponseCallback}
+            initDatas={initDatas}
+          />
       )}
     </div>
   );
