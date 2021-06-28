@@ -1,57 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>test web wallet</title>
+  </head>
+  <body>
+    <div></div>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>test web wallet</title>
-</head>
+    <script src="./dist/public-api.js"></script>
+    <script>
+      // window.open(
+      //   "http://localhost:3000/tic-tac-toe",
+      //   "SingleSecondaryWindowName",
+      //   "resizable,scrollbars,status"
+      // );
+      //   const iframe = document.createElement("iframe");
+      //   iframe.src = "http://localhost:3000/tic-tac-toe";
+      //   const div = document.createElement("div");
+      //   div.style.cssText =
+      //     "position: fixed; top: 0; left: 0; width: 50px; height: 50px;";
+      //   div.appendChild(iframe);
+      //   document.body.appendChild(div);
 
-<body>
-  <div></div>
+      const bsv = bsvWebWallet.default.Bsv({
+        pageUrl: "http://localhost:3000/bsv-web-wallet",
+        debug: true,
+      });
 
-  <script src="./dist/public-api.js"></script>
-  <script>
-    // window.open(
-    //   "http://localhost:3000/tic-tac-toe",
-    //   "SingleSecondaryWindowName",
-    //   "resizable,scrollbars,status"
-    // );
-    //   const iframe = document.createElement("iframe");
-    //   iframe.src = "http://localhost:3000/tic-tac-toe";
-    //   const div = document.createElement("div");
-    //   div.style.cssText =
-    //     "position: fixed; top: 0; left: 0; width: 50px; height: 50px;";
-    //   div.appendChild(iframe);
-    //   document.body.appendChild(div);
+      console.log("getAccount");
+      bsv
+        .getAccount()
+        .then((res) => {
+          console.log("getAccount", res);
+        })
+        .then(() => {
+          bsv.requestAccount().then((res) => {
+            console.log("requestAccount", res);
+          });
+        });
 
-    const bsv = bsvWebWallet.default.Bsv({
-      pageUrl: "http://localhost:3000/bsv-web-wallet",
-      debug: true,
-    });
-
-    console.log("getAccount");
-    // bsv
-    //   .getAccount()
-    //   .then((res) => {
-    //     console.log("getAccount", res);
-    //   })
-    //   .then(() => {
-    //     bsv.requestAccount().then((res) => {
-    //       console.log("requestAccount", res);
-    //     });
-    //   });
-
-    bsv.transferBsv({
-        receivers: [{
-          address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
-          amount: 1000000,
-        }, ],
-      })
-      .then((res) =>
-        console.log("transferBsvRes", res)
-      );
+      bsv.transferBsv({
+          receivers: [
+            {
+              address: "mg4YnKJGgwqCUWd7Kf8g9r5Pr5Zs6KR8BV",
+              amount: 10057266,
+            },
+          ],
+        })
+        .then((res) => console.log("transferBsvRes", res));
+      // bsv.transferSensibleFt({
+      //   codehash: "b214af02de5757f9a512f70c5ff286be54780c59",
+      //   genesis:
+      //     "6294c9a192c3c10fb242fe67ab2233a33a8cf4709219a17de3e838a66e3fa75100000000",
+      //   receivers: [
+      //     {
+      //       address: "mg4YnKJGgwqCUWd7Kf8g9r5Pr5Zs6KR8BV",
+      //       amount: "4000000000",
+      //     },
+      //   ],
+      // });
 
     // bsv.transferAll([{
     //     receivers: [{
@@ -73,7 +82,6 @@
     // ]).then((res) => 
     //   console.log("transferAll",res)
     // );
-  </script>
-</body>
-
+    </script>
+  </body>
 </html>

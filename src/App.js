@@ -38,6 +38,7 @@ import * as actions from "./state/action";
 import { useOnceCall } from "./hooks";
 import "./App.css";
 import * as util from "./lib/util";
+import * as Sentry from "@sentry/react";
 
 const { Option } = Select;
 
@@ -67,7 +68,7 @@ function Header() {
 
   return (
     <div className="header">
-      <div className="logo">Web Wallet</div>
+      <div className="logo">Web Wallet return</div>
       {account && (
         <Popover
           title=""
@@ -216,7 +217,7 @@ function AccountInfoPanel({ onWithDraw, onTransfer }) {
   const [bsvBalance] = useGlobalState("bsvBalance");
   const [sensibleFtList] = useGlobalState("sensibleFtList");
 
-  if (!key) {
+  if (!key || !account) {
     return null;
   }
   const handleHistory = () => {
@@ -396,7 +397,6 @@ function TransferAllPanel({
 
     const broadcastBsv = async ({ formatReceiverList, token, decimal, genesis }) => {
       setLoading(true);
-      let txid = "";
       let transferRes;
       try {
         const res = await await transferBsv(
@@ -405,7 +405,6 @@ function TransferAllPanel({
           formatReceiverList
         );
         transferRes = res;
-        txid = res.txid;
       } catch (err) {
         const msg = "broadcast error: " + err.toString();
         onTransferCallback({
@@ -420,7 +419,6 @@ function TransferAllPanel({
 
     const broadcastSensibleFt = async ({ formatReceiverList, token, decimal, genesis }) => {
       setLoading(true);
-      let txid = "";
       let transferRes;
       try {
         const signers = satotxConfigMap.get(genesis) || [
@@ -437,7 +435,6 @@ function TransferAllPanel({
           token.genesis
         );
         transferRes = res;
-        txid = res.txid;
       } catch (err) {
         console.log("broadcast sensible ft error ");
         console.error(err);
@@ -707,7 +704,7 @@ function TransferPanel({
       totalOutputValueFloatDuck,
       util.getDecimalString(decimal)
     );
-    if (balance < +totalOutputValue) {
+    if (util.lessThan(balance, totalOutputValue)) {
       const msg = "Insufficient ft balance";
       onTransferCallback({
         error: msg,
@@ -735,15 +732,41 @@ function TransferPanel({
         txid = res.txid;
       } catch (err) {
         const msg = "broadcast error: " + err.toString();
+        console.log(
+          util.safeJsonStringify({
+            type: "bsvTransferFail",
+            msg,
+            account: {
+              network: account.network,
+              address: key.address,
+            },
+            receivers: formatReceiverList,
+          })
+        );
+        Sentry.captureException(err);
+        Sentry.captureMessage(`bsvTransferFail_${key.address}`);
         onTransferCallback({
           error: msg,
         });
         console.log("broadcast bsv error ");
-        console.error(err)
+        console.error(err);
         message.error(err.toString());
       }
       setLoading(false);
       if (txid) {
+        console.log(
+          util.safeJsonStringify({
+            type: "bsvTransferSuccess",
+            account: {
+              network: account.network,
+              address: key.address,
+            },
+            receivers: formatReceiverList,
+            txid,
+            ...transferRes,
+          })
+        );
+        Sentry.captureMessage(`bsvTransferSuccess_${key.address}_${txid}`);
         onTransferCallback({
           response: {
             ...transferRes,
@@ -791,9 +814,44 @@ function TransferPanel({
         console.log("broadcast sensible ft error ");
         console.error(err);
         message.error(err.toString());
+        console.log(
+          util.safeJsonStringify({
+            type: "ftTransferFail",
+            msg: util.safeJsonStringify(err.message),
+            account: {
+              network: account.network,
+              address: key.address,
+            },
+            genesis: token.genesis,
+            codehash: token.codehash,
+            receivers: formatReceiverList,
+          })
+        );
+        Sentry.captureException(err);
+        Sentry.captureMessage(
+          `ftTransferFail_${key.address}_${token.genesis}_${token.genesis}`
+        );
+        onTransferCallback({
+          error: err.toString(),
+        });
       }
       setLoading(false);
       if (txid) {
+        console.log(
+          util.safeJsonStringify({
+            type: "ftTransferSuccess,",
+            account: {
+              network: account.network,
+              address: key.address,
+              genesis: token.genesis,
+              codehash: token.codehash,
+            },
+            receivers: formatReceiverList,
+            txid,
+            ...transferRes,
+          })
+        );
+        Sentry.captureMessage(`ftTransferSuccess_${key.address}_${txid}`);
         onTransferCallback({
           response: {
             ...transferRes,
@@ -1000,7 +1058,9 @@ function App() {
   // todo 此处接收 postMessage 消息，处理登录,transfer
   const requestAccountCondition = key?.address && account?.network;
   const transferBsvCondition =
-    requestAccountCondition && bsvBalance && bsvBalance.balance >= 0;
+    requestAccountCondition &&
+    bsvBalance &&
+    util.greaterThanEqual(bsvBalance.balance, 0);
   useOnceCall(() => {
     const data = getHashData();
     if (!data || data.data.type !== "request") {
@@ -1042,7 +1102,7 @@ function App() {
       (prev, cur) => util.plus(prev, cur.amount),
       0
     );
-    if (outputTotal > bsvBalance.balance) {
+    if (util.greaterThan(outputTotal, bsvBalance.balance)) {
       handlePopResponseCallback({ error: "insufficient bsv balance" });
       return;
     }
@@ -1072,7 +1132,7 @@ function App() {
       handlePopResponseCallback({ error: "insufficient ft balance" });
       return;
     }
-    if (+outputTotal >= +ft.balance) {
+    if (util.greaterThan(outputTotal, ft.balance)) {
       handlePopResponseCallback({ error: "insufficient ft balance" });
       return;
     }
@@ -1118,7 +1178,7 @@ function App() {
     const obu = window.onbeforeunload;
     window.onbeforeunload = function (event) {
       handlePopResponseCallback({ error: "use closed" });
-      return obu(event);
+      return obu && obu(event);
     };
   });
   return (

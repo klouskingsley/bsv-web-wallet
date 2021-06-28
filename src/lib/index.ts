@@ -7,6 +7,7 @@ import * as tokenProto from 'sensible-sdk/dist/bcp02/tokenProto'
 import * as protoHeader from 'sensible-sdk/dist/bcp02/protoheader'
 import { getCodeHash } from 'sensible-sdk/dist/common/utils';
 import * as util from './util'
+import * as Sentry from "@sentry/react";
 
 function getSensibleApiPrefix(network: NetWork) {
     const test = network === NetWork.Mainnet ? '' : '/test'
@@ -23,7 +24,8 @@ function sleep(ms: number) {
 export function formatValue(value: number, decimal: number) {
     // const bigNum = bsv.crypto.BN.fromNumber(value)
     // return bigNum.div(10**decimal).toString(10)
-    return value / (10**decimal)
+    // return value / (10**decimal)
+    return util.div(value, util.getDecimalString(decimal))
 }
 
 export function isValidAddress(network: NetWork, address: string) {
@@ -115,7 +117,7 @@ export async function getAddressSensibleFtList(network: NetWork, address: string
                 tokenName: item.name,
                 tokenSymbol: item.symbol,
                 tokenDecimal: item.decimal,
-                balance: item.balance + item.pendingBalance,
+                balance: util.plus(item.balance, item.pendingBalance),
             }
         })
     }
@@ -139,31 +141,65 @@ export async function getAddressBsvUtxoList(network: NetWork, address: string, p
             }
         })
     }
+
+    // const fakeUtxoList: BsvUtxo[] = [
+    //     {
+    //         txId: '6a18f5b859fb4c281affaf8f6245a2fe0813867d4b7d24948da18e099462619b',
+    //         outputIndex: 0,
+    //         satoshis: 98775,
+    //         address,
+    //     },
+    //     {
+    //         txId: 'de980facfe7b10a84bfa658130b2b7725565510f967534459d63e6c9717a08e2',
+    //         outputIndex: 0,
+    //         satoshis: 98679,
+    //         address,
+    //     },
+    //     {
+    //         txId: '8ace8ab3995de63af867d929561b3a48bb499ea8d6e64c2ecefba29c6213764f',
+    //         outputIndex: 4,
+    //         satoshis: 4939535,
+    //         address,
+    //     },
+    //     {
+    //         txId: '74bec534becb77f894bcacaf2386604642a1ea00e371838b1780f5235a12bb9d',
+    //         outputIndex: 2,
+    //         satoshis: 45033315,
+    //         address,
+    //     }
+    // ]
+    // if (page === 1) {
+    //     return fakeUtxoList
+    // }
+    // return []
+    
     throw new Error(data.msg)
 }
 
 // 获取bsv 余额, 这里加入了ft utxo的值，暂时不能用
-export async function getAddressBsvBalance(network: NetWork, address: string): Promise<number> {
+export async function getAddressBsvBalance(network: NetWork, address: string): Promise<number | string> {
     const apiPrefix = getSensibleApiPrefix(network)
     const {data} = await axios.get(`${apiPrefix}/address/${address}/balance`)
     const success = isSensibleSuccess(data)
     if (success) {
-        return data.data.satoshi + data.data.pendingSatoshi
+        return util.plus(data.data.satoshi, data.data.pendingSatoshi)
     }
     throw new Error(data.msg)
 }
 
-export async function getAddressBsvBalanceByUtxo(network: NetWork, address: string): Promise<number> {
+export async function getAddressBsvBalanceByUtxo(network: NetWork, address: string): Promise<string> {
     let page = 1
-    let sum = 0
+    let sum: string = '0'
     for (;;) {
         const utxoList = await getAddressBsvUtxoList(network, address, page)
-        sum = utxoList.reduce((prev, cur) => prev + cur.satoshis, sum)
+        const total = utxoList.reduce((prev: any, cur: any) => util.plus(prev, cur.satoshis), '0')
+        sum = util.plus(sum, total)
         if (utxoList.length === 0) {
             break
         }
         page++
     }
+    console.log('balance', sum)
     return sum
 }
 
@@ -196,11 +232,18 @@ export async function broadcastSensibleQeury(network: NetWork, rawtx: string) {
     if (success) {
         return new bsv.Transaction(rawtx).hash
     }
-    return new Error(data.msg)
+    throw new Error(data.msg)
 }
 
 
 // 发送 token 交易
+const mapBsvFeeError = (err: Error) => {
+    if (err.message === "Insufficient balance.") {
+        // 将模糊的错误信息转换
+        return new Error('Low bsv balance to pay miners')
+    }
+    return err
+}
 export async function transferSensibleFt(network: NetWork, signers: SensibleSatotx[], senderWif: string, receivers: TransferReceiver[], codehash: string, genesis: string){
     const selectRes = await SensibleFT.selectSigners()
     const ft = new SensibleFT({
@@ -219,12 +262,14 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
             codehash,
             genesis,
         })
+        util.checkFeeRate(tx)
         const txParseRes = parseTransaction(network, tx.serialize(true))
         return {
             txid,
             outputs: txParseRes.outputs,
         }
-    } catch (err) {
+    } catch (_err) {
+        const err = mapBsvFeeError(_err)
         const errMsg = err.toString();
         const isBsvAmountExceed =
           errMsg.indexOf(
@@ -246,7 +291,7 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
             } catch (err) {
                 console.log('merge bsv utxo fail')
                 console.error(err)
-                
+                throw err
             }
 
             // merge 后重新发起 ft transfer 交易
@@ -257,12 +302,14 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
                     codehash,
                     genesis,
                 })
+                util.checkFeeRate(tx)
                 const txParseRes = parseTransaction(network, tx.serialize(true))
                 return {
                     txid,
                     outputs: txParseRes.outputs,
                 }
-            } catch (err) {
+            } catch (_err) {
+                const err = mapBsvFeeError(_err)
                 console.log('ft transfer fail after bsv utxo merge')
                 console.error(err)
                 const errMsg = err.toString()
@@ -276,11 +323,12 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
         if (isFtUtxoAmountExceed) {
             // merge utxo
             try {
-                await ft.merge({
+                const {tx} = await ft.merge({
                     ownerWif: senderWif,
                     codehash,
                     genesis,
                 })
+                util.checkFeeRate(tx)
                 await sleep(3000)
             } catch (err) {
                 console.log('merge ft utxo fail')
@@ -296,18 +344,19 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
                     codehash,
                     genesis,
                 })
+                util.checkFeeRate(tx)
                 const txParseRes = parseTransaction(network, tx.serialize(true))
                 return {
                     txid,
                     outputs: txParseRes.outputs,
                 }
-            } catch (err) {
+            } catch (_err) {
+                const err = mapBsvFeeError(_err)
                 console.log('ft transfer fail after ft utxo merge')
                 console.error(err)
                 throw err
             }
         }
-
     } 
 }
 
@@ -343,6 +392,29 @@ export function unlockP2PKHInput(privateKey: bsv.PrivateKey, tx: bsv.Transaction
   }
 
 // 发送 bsv 交易
+function checkBsvReceiversSatisfied(receivers: TransferReceiver[], tx: any, network: NetWork) {
+    let satified = true
+    const txAddressAmountMap: {[key: string]: number} = {}
+    const getKey = (address: string, amount: any) => {
+        return `${address}_${util.toString(amount)}`
+    }
+    tx.outputs.forEach((output: any) => {
+        const address = output.script.toAddress(network);
+        const amount = output.satoshis
+        const key = getKey(address, amount)
+        txAddressAmountMap[key] = (txAddressAmountMap[key] || 0) + 1
+    })
+    for (let i = 0; i < receivers.length; i++) {
+        const rece = receivers[i]
+        const key = getKey(rece.address, rece.amount)
+        if (!txAddressAmountMap[key]) {
+            satified = false
+            break
+        }
+        txAddressAmountMap[key] = txAddressAmountMap[key] - 1
+    }
+    return satified
+}
 export async function transferBsv(network: NetWork, senderWif: string, receivers: TransferReceiver[]) {
     // 1. 获取用户 utxo 列表
     // 2. 判断 utxo 金额 是否 满足 receivers 金额
@@ -351,11 +423,11 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     console.log('arguments', network, senderWif, receivers)
     const address = new bsv.PrivateKey(senderWif, network).toAddress(network)
     const balance = await getAddressBsvBalanceByUtxo(network, address)
-    const totalOutput = receivers.reduce((prev: any, cur) => util.plus(prev, cur.amount), 0)
-    if (balance < +totalOutput) {
-        throw new Error('Insufficient_Balance')
+    const totalOutput = receivers.reduce((prev: any, cur) => util.plus(prev, cur.amount), '0')
+    if (util.lessThan(balance, totalOutput)) {
+        throw new Error('Insufficient_bsv_Balance')
     }
-    let utxoValue: number | string = 0
+    let utxoValue: string = '0'
     let selectedUtxoList = []
 
     const tx = new bsv.Transaction()
@@ -382,11 +454,11 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
                     script: bsv.Script.empty(),
                 })
             );
-            if (+totalOutput <= +utxoValue) {
+            if (util.lessThanEqual(util.plus(totalOutput, dust), utxoValue)) {
                 break
             }
         }
-        if (+totalOutput <= +utxoValue) {
+        if (util.lessThanEqual(util.plus(totalOutput, dust), utxoValue)) {
             break
         }
         if (utxoResList.length <= 0 ) {
@@ -396,10 +468,11 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
     receivers.forEach(item => {
         tx.to(item.address, +item.amount)
     })
-    if (+util.minus(utxoValue, +totalOutput) > 0) {
+    if (util.greaterThan(util.minus(utxoValue, +totalOutput), 0)) {
         tx.change(address)
     }
-    if (+util.minus(util.plus(utxoValue, tx.getFee(), dust), +totalOutput) > 0) {
+    // 如果 (utxo输入 - fee - 所有输出) = 找零 < dust，那么全部转出
+    if (util.lessThan(util.minus(utxoValue, tx.getFee(), totalOutput), dust)) {
         // 全部转出
         tx.clearOutputs()
         receivers.forEach((item, index) => {
@@ -416,11 +489,24 @@ export async function transferBsv(network: NetWork, senderWif: string, receivers
         const privateKey = new bsv.PrivateKey(senderWif)
         unlockP2PKHInput(privateKey, tx, inputIndex, sighashType);
     });
+    util.checkFeeRate(tx)
     const txid = await broadcastSensibleQeury(network, tx.serialize())
     const txParseRes = parseTransaction(network, tx.serialize(true))
+
+    const amountSatified = checkBsvReceiversSatisfied(receivers, tx, network)
+    if (!amountSatified) {
+        console.log(util.safeJsonStringify({
+            type: 'bsvTransferAmountNotSatified',
+            txid: tx.hash,
+            receivers,
+            outputs: txParseRes.outputs,
+        }))
+        Sentry.captureMessage(`bsvTransferAmountNotSatified_${address}_${tx.hash}`);
+    }
     return {
         txid,
         outputs: txParseRes.outputs,
+        fee: tx.getFee()
     }
 }
 
@@ -446,6 +532,7 @@ export async function mergeBsvUtxo(network: NetWork, senderWif: string) {
         const privateKey = new bsv.PrivateKey(senderWif)
         unlockP2PKHInput(privateKey, tx, inputIndex, sighashType)
     })
+    util.checkFeeRate(tx)
     const txid = await broadcastSensibleQeury(network, tx.serialize())
     const txParseRes = parseTransaction(network, tx.serialize(true))
     return {
