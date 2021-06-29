@@ -395,9 +395,10 @@ function TransferAllPanel({
     const receiverLists = form.getFieldsValue();
 
 
-    const broadcastBsv = async ({ formatReceiverList, token, decimal, genesis }) => {
+    const broadcastBsv = async ({ formatReceiverList }) => {
       setLoading(true);
       let transferRes;
+      let txid = '';
       try {
         const res = await await transferBsv(
           account.network,
@@ -405,8 +406,11 @@ function TransferAllPanel({
           formatReceiverList
         );
         transferRes = res;
+        txid = res.txid;
       } catch (err) {
         const msg = "broadcast error: " + err.toString();
+        Sentry.captureException(err);
+        Sentry.captureMessage(`bsvTransferFail_${key.address}`);
         onTransferCallback({
           error: msg,
         });
@@ -414,6 +418,7 @@ function TransferAllPanel({
         console.error(err)
         message.error(err.toString());
       }
+      Sentry.captureMessage(`bsvTransferSuccess_${key.address}_${txid}`);
       return transferRes
     };
 
@@ -436,6 +441,9 @@ function TransferAllPanel({
         );
         transferRes = res;
       } catch (err) {
+        onTransferCallback({
+          error: "broadcast sensible ft error ",
+        });
         console.log("broadcast sensible ft error ");
         console.error(err);
         message.error(err.toString());
@@ -475,7 +483,7 @@ function TransferAllPanel({
             amount: item.amount
           };
         });
-        txPromises.push(isBsv ? broadcastBsv({ formatReceiverList, decimal }) : broadcastSensibleFt({ formatReceiverList, token, decimal, genesis: data.genesis }))
+        txPromises.push(isBsv ? broadcastBsv({ formatReceiverList }) : broadcastSensibleFt({ formatReceiverList, token, decimal, genesis: data.genesis }))
 
       });
       Promise.all(txPromises).then(res => {
