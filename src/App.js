@@ -367,21 +367,21 @@ function TransferAllPanel({
   const [loading, setLoading] = useState(false);
 
   useOnceCall(() => {
+    const values = {};
     initDatas.forEach((data, index) => {
 
       const isBsv = !data.genesis;
       const token = sensibleFtList.find((item) => item.genesis === data.genesis);
       const decimal = isBsv ? 8 : token.tokenDecimal;
-      const values = {};
       values[`receiverList${index}`] = data.receivers.map((item) => {
         return {
           address: item.address,
           amount: util.div(item.amount, util.getDecimalString(decimal)),
         };
       })
-      form.setFieldsValue(values);
 
     })
+    form.setFieldsValue(values);
   }, key && bsvBalance);
 
   if (!key) {
@@ -1161,7 +1161,7 @@ function App() {
         (prev, cur) => util.plus(prev, cur.amount),
         0
       );
-      if (isBsv && outputTotal > bsvBalance.balance) {
+      if (isBsv && +outputTotal > +bsvBalance.balance) {
         handlePopResponseCallback({ error: "insufficient bsv balance" });
         return;
       }

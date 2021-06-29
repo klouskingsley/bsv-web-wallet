@@ -30,26 +30,26 @@
       });
 
       console.log("getAccount");
-      bsv
-        .getAccount()
-        .then((res) => {
-          console.log("getAccount", res);
-        })
-        .then(() => {
-          bsv.requestAccount().then((res) => {
-            console.log("requestAccount", res);
-          });
-        });
+      // bsv
+      //   .getAccount()
+      //   .then((res) => {
+      //     console.log("getAccount", res);
+      //   })
+      //   .then(() => {
+      //     bsv.requestAccount().then((res) => {
+      //       console.log("requestAccount", res);
+      //     });
+      //   });
 
-      bsv.transferBsv({
-          receivers: [
-            {
-              address: "mg4YnKJGgwqCUWd7Kf8g9r5Pr5Zs6KR8BV",
-              amount: 10057266,
-            },
-          ],
-        })
-        .then((res) => console.log("transferBsvRes", res));
+      // bsv.transferBsv({
+      //     receivers: [
+      //       {
+      //         address: "mg4YnKJGgwqCUWd7Kf8g9r5Pr5Zs6KR8BV",
+      //         amount: 10057266,
+      //       },
+      //     ],
+      //   })
+      //   .then((res) => console.log("transferBsvRes", res));
       // bsv.transferSensibleFt({
       //   codehash: "b214af02de5757f9a512f70c5ff286be54780c59",
       //   genesis:
@@ -62,26 +62,26 @@
       //   ],
       // });
 
-    // bsv.transferAll([{
-    //     receivers: [{
-    //         address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
-    //         amount: 1000000,
-    //       },
+    bsv.transferAll([{
+        receivers: [{
+            address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
+            amount: 60743,
+          },
 
-    //     ]
-    //   },
-    //   {
-    //     receivers: [{
-    //         address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
-    //         amount: 1000000,
-    //       },
-    //     ],
-    //       codehash: 'd4a08ac0c9430224a3ecff23e45fa1c2ead56483',
-    //       genesis: '4c3db93bbc67444cdd68c7ca275c669e05444641647143e5f5c66c2d55ddf7dc00000000',
-    //   },
-    // ]).then((res) => 
-    //   console.log("transferAll",res)
-    // );
+        ]
+      },
+      {
+        receivers: [{
+            address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
+            amount: "1000000000",
+          },
+        ],
+          codehash: "3256addee87250879b4fba083e01a7c2ebbe63e5",
+          genesis: "46051d3da13e774175c21e6d2346b7dfa3e3adfdda6665470f7688531164b00000000000",
+      },
+    ]).then((res) => 
+      console.log("transferAll",res)
+    );
     </script>
   </body>
 </html>
