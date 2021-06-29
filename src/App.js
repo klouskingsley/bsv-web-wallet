@@ -461,7 +461,7 @@ function TransferAllPanel({
           totalOutputValueFloatDuck,
           util.getDecimalString(decimal)
         );
-        if (balance < +totalOutputValue) {
+        if (util.lessThan(balance, totalOutputValue)) {
           const msg = "Insufficient ft balance";
           onTransferCallback({
             error: msg,
@@ -1161,11 +1161,11 @@ function App() {
         (prev, cur) => util.plus(prev, cur.amount),
         0
       );
-      if (isBsv && +outputTotal > +bsvBalance.balance) {
+      if (isBsv && util.greaterThan(outputTotal, bsvBalance.balance)) {
         handlePopResponseCallback({ error: "insufficient bsv balance" });
         return;
       }
-      if (ft && +outputTotal >= +ft.balance) {
+      if (ft && util.greaterThan(outputTotal, ft.balance)) {
         handlePopResponseCallback({ error: "insufficient ft balance" });
         return;
       }
