@@ -441,8 +441,12 @@ function TransferAllPanel({
         );
         transferRes = res;
       } catch (err) {
+        Sentry.captureException(err);
+        Sentry.captureMessage(
+          `ftTransferFail_${key.address}_${token.genesis}_${token.genesis}`
+        );
         onTransferCallback({
-          error: "broadcast sensible ft error ",
+          error: "broadcast sensible ft error, " + err.toString(),
         });
         console.log("broadcast sensible ft error ");
         console.error(err);
