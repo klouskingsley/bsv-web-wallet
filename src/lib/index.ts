@@ -105,8 +105,25 @@ export function getWocTransactionUrl(network: NetWork, txid: string) {
 // todo 分页获取
 export async function getAddressSensibleFtList(network: NetWork, address: string): Promise<SensibleFt[]> {
     // todo remove next line
+    let res: SensibleFt[] = []
+    try {
+        for (let page = 1; ; page++) {
+            const list = await getAddressSensibleFtListByPage(network, address, page)
+            res = [...res, ...list]
+            if (list.length === 0) {
+                break
+            }
+        }
+    } catch (err) {
+        console.log('getAddressSensibleFtList error')
+        console.error(err)
+    }
+    return res;
+}
+
+export async function getAddressSensibleFtListByPage(network: NetWork, address: string, page: number): Promise<SensibleFt[]> {
     const apiPrefix = getSensibleApiPrefix(network)
-    const {data} = await axios.get(`${apiPrefix}/ft/summary/${address}?cursor=0&size=20`)
+    const {data} = await axios.get(`${apiPrefix}/ft/summary/${address}?cursor=${(page - 1) * 20}&size=20`)
     const success = isSensibleSuccess(data)
 
     if (success) {
