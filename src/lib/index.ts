@@ -4,7 +4,7 @@ import {Key, SensibleFt, SensibleSatotx, TransferReceiver, BsvUtxo} from '../sta
 import axios from 'axios'
 import {SensibleFT} from 'sensible-sdk'
 import * as tokenProto from 'sensible-sdk/dist/bcp02/tokenProto'
-import * as protoHeader from 'sensible-sdk/dist/bcp02/protoheader'
+import * as protoHeader from 'sensible-sdk/dist/common/protoheader'
 import { getCodeHash } from 'sensible-sdk/dist/common/utils';
 import * as util from './util'
 import * as Sentry from "@sentry/react";
@@ -544,13 +544,6 @@ export async function mergeBsvUtxo(network: NetWork, senderWif: string) {
 // 合并 sensible ft
 export async function mergeSensibleFt(network: NetWork) {}
 
-const getGenesis = function (txid: string, index: number) {
-    const txidBuf = Buffer.from(txid, "hex").reverse();
-    const indexBuf = Buffer.alloc(4, 0);
-    indexBuf.writeUInt32LE(index);
-    return toHex(Buffer.concat([txidBuf, indexBuf]));
-};
-
 const hasProtoFlag = function (scriptBuffer: any) {
     const flag = protoHeader.getFlag(scriptBuffer);
     if (flag.compare(protoHeader.PROTO_FLAG) === 0) {
@@ -570,7 +563,8 @@ const parseTokenContractScript = function (scriptBuf: any, network: any = "mainn
       Buffer.from(dataPart.tokenAddress!, "hex"),
       network
     ).toString();
-    const genesis = getGenesis(dataPart.tokenID!.txid, dataPart.tokenID!.index);
+    // const genesis = getGenesis(dataPart.sensibleID!.txid, dataPart.sensibleID!.index);
+    const genesis = toHex(tokenProto.getTokenID(scriptBuf));
     const codehash = getCodeHash(new bsv.Script(scriptBuf));
     return {
       ...dataPart,
