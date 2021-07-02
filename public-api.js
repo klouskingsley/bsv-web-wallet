@@ -187,6 +187,7 @@ function Bsv({
       receivers,
       codehash,
       genesis,
+      rabinApis
     });
   };
   const transferAll = function (datas) {
