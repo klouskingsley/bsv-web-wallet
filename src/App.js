@@ -466,6 +466,7 @@ function TransferAllPanel({
           token.genesis
         );
         transferRes = res;
+
       } catch (err) {
         Sentry.captureException(err);
         Sentry.captureMessage(
@@ -483,14 +484,13 @@ function TransferAllPanel({
 
     const broadcastAll = async () => {
       const transferRes = [];
-      const txPromises = [];
-      initDatas.forEach(async (data, index) => {
-
+      for (let i = 0; i < initDatas.length; i++) {
+        const data = initDatas[i];
         const isBsv = !data.genesis;
         const token = sensibleFtList.find((item) => item.genesis === data.genesis);
         const decimal = isBsv ? 8 : token.tokenDecimal;
         const balance = isBsv ? bsvBalance.balance : token.balance;
-        const totalOutputValueFloatDuck = receiverLists[`receiverList${index}`].reduce(
+        const totalOutputValueFloatDuck = receiverLists[`receiverList${i}`].reduce(
           (prev, cur) => util.plus(prev, cur.amount),
           0
         );
@@ -513,18 +513,16 @@ function TransferAllPanel({
             amount: item.amount
           };
         });
-        txPromises.push(isBsv ? broadcastBsv({ formatReceiverList }) : broadcastSensibleFt({ formatReceiverList, token, decimal, genesis: data.genesis }))
+        const res = isBsv ? await broadcastBsv({ formatReceiverList }) : await broadcastSensibleFt({ formatReceiverList, token, decimal, genesis: data.genesis });
+        transferRes.push(res);
+      }
 
+      setLoading(false);
+      onTransferCallback({
+        response: {
+          ...transferRes,
+        },
       });
-      Promise.all(txPromises).then(res => {
-        transferRes.push(...res);
-        setLoading(false);
-        onTransferCallback({
-          response: {
-            ...transferRes,
-          },
-        });
-      })
     }
 
     Modal.confirm({
@@ -1218,7 +1216,7 @@ function App() {
         return;
       }
       setTransfering(true);
-      console.log(params.datas);
+      // console.log(params.datas);
       setInitDatas(params.datas);
     })
   }, !!transferBsvCondition);
