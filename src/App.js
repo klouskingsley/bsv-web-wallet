@@ -69,7 +69,7 @@ function Header() {
 
   return (
     <div className="header">
-      <div className="logo">Web Wallet return</div>
+      <div className="logo">Web Wallet</div>
       {account && (
         <Popover
           title=""
@@ -135,7 +135,7 @@ function LoginPanel() {
       title: "安全注意",
       content: (
         <div>
-          Web钱包的私钥是通过用户的用户名和密码实时计算得到，不会上传服务器，也不会保存在本地(代码见
+          Web钱包的私钥是通过用户的邮箱和密码实时计算得到，不会上传服务器，也不会保存在本地(代码见
           <a
             href="https://github.com/klouskingsley/bsv-web-wallet"
             target="_blank"
@@ -143,7 +143,7 @@ function LoginPanel() {
           >
             github
           </a>
-          )。仅供方便用户测试之用，不适合存放大量资金，建议用户妥善保管用户名+密码组合以防资金丢失，或在使用完成之后将剩余资金转移。用户名+密码组合丢失(忘记，被盗等情形)会导致资产丢失
+          )。仅供方便用户测试之用，不适合存放大量资金，建议用户妥善保管邮箱+密码组合以防资金丢失，或在使用完成之后将剩余资金转移。邮箱+密码组合丢失(忘记，被盗等情形)会导致资产丢失
         </div>
       ),
       onOk: () => {
@@ -197,6 +197,9 @@ function LoginPanel() {
             <Option value="mainnet">mainnet</Option>
             <Option value="testnet">testnet</Option>
           </Select>
+        </Form.Item>
+        <Form.Item>
+          说明：Web钱包的私钥是通过用户的邮箱和密码实时计算得到(无需注册)，每次输入相同的邮箱和密码登录即可计算出相同的私钥，私钥不会上传服务器，也不会保存在本地，仅供方便用户测试之用，不适合存放大量资金，建议用户妥善保管邮箱+密码组合以防资金丢失。
         </Form.Item>
         <Form.Item>
           <Button
@@ -379,11 +382,7 @@ function AccountInfoPanel({ onWithDraw, onTransfer }) {
 
 // }
 
-function TransferAllPanel({
-  initDatas = [],
-  onCancel,
-  onTransferCallback,
-}) {
+function TransferAllPanel({ initDatas = [], onCancel, onTransferCallback }) {
   const [key] = useGlobalState("key");
   const [bsvBalance] = useGlobalState("bsvBalance");
   const [account] = useGlobalState("account");
@@ -395,18 +394,18 @@ function TransferAllPanel({
   useOnceCall(() => {
     const values = {};
     initDatas.forEach((data, index) => {
-
       const isBsv = !data.genesis;
-      const token = sensibleFtList.find((item) => item.genesis === data.genesis);
+      const token = sensibleFtList.find(
+        (item) => item.genesis === data.genesis
+      );
       const decimal = isBsv ? 8 : token.tokenDecimal;
       values[`receiverList${index}`] = data.receivers.map((item) => {
         return {
           address: item.address,
           amount: util.div(item.amount, util.getDecimalString(decimal)),
         };
-      })
-
-    })
+      });
+    });
     form.setFieldsValue(values);
   }, key && bsvBalance);
 
@@ -420,11 +419,10 @@ function TransferAllPanel({
   const handleSubmit = async () => {
     const receiverLists = form.getFieldsValue();
 
-
     const broadcastBsv = async ({ formatReceiverList }) => {
       setLoading(true);
       let transferRes;
-      let txid = '';
+      let txid = "";
       try {
         const res = await await transferBsv(
           account.network,
@@ -441,14 +439,19 @@ function TransferAllPanel({
           error: msg,
         });
         console.log("broadcast bsv error ");
-        console.error(err)
+        console.error(err);
         message.error(err.toString());
       }
       Sentry.captureMessage(`bsvTransferSuccess_${key.address}_${txid}`);
-      return transferRes
+      return transferRes;
     };
 
-    const broadcastSensibleFt = async ({ formatReceiverList, token, decimal, genesis }) => {
+    const broadcastSensibleFt = async ({
+      formatReceiverList,
+      token,
+      decimal,
+      genesis,
+    }) => {
       setLoading(true);
       let transferRes;
       try {
@@ -466,7 +469,6 @@ function TransferAllPanel({
           token.genesis
         );
         transferRes = res;
-
       } catch (err) {
         Sentry.captureException(err);
         Sentry.captureMessage(
@@ -487,13 +489,14 @@ function TransferAllPanel({
       for (let i = 0; i < initDatas.length; i++) {
         const data = initDatas[i];
         const isBsv = !data.genesis;
-        const token = sensibleFtList.find((item) => item.genesis === data.genesis);
+        const token = sensibleFtList.find(
+          (item) => item.genesis === data.genesis
+        );
         const decimal = isBsv ? 8 : token.tokenDecimal;
         const balance = isBsv ? bsvBalance.balance : token.balance;
-        const totalOutputValueFloatDuck = receiverLists[`receiverList${i}`].reduce(
-          (prev, cur) => util.plus(prev, cur.amount),
-          0
-        );
+        const totalOutputValueFloatDuck = receiverLists[
+          `receiverList${i}`
+        ].reduce((prev, cur) => util.plus(prev, cur.amount), 0);
 
         const totalOutputValue = util.multi(
           totalOutputValueFloatDuck,
@@ -510,10 +513,17 @@ function TransferAllPanel({
           return {
             address: item.address,
             // amount: util.multi(item.amount, util.getDecimalString(decimal)),
-            amount: item.amount
+            amount: item.amount,
           };
         });
-        const res = isBsv ? await broadcastBsv({ formatReceiverList }) : await broadcastSensibleFt({ formatReceiverList, token, decimal, genesis: data.genesis });
+        const res = isBsv
+          ? await broadcastBsv({ formatReceiverList })
+          : await broadcastSensibleFt({
+              formatReceiverList,
+              token,
+              decimal,
+              genesis: data.genesis,
+            });
         transferRes.push(res);
       }
 
@@ -523,12 +533,12 @@ function TransferAllPanel({
           ...transferRes,
         },
       });
-    }
+    };
 
     Modal.confirm({
       title: "Confirm the transaction",
       onOk: () => {
-        broadcastAll()
+        broadcastAll();
       },
     });
   };
@@ -549,9 +559,10 @@ function TransferAllPanel({
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
         {initDatas.map((data, index) => {
-
           const isBsv = !data.genesis;
-          const token = sensibleFtList.find((item) => item.genesis === data.genesis);
+          const token = sensibleFtList.find(
+            (item) => item.genesis === data.genesis
+          );
 
           if (!isBsv && !token) {
             return null;
@@ -561,102 +572,105 @@ function TransferAllPanel({
           const balance = isBsv ? bsvBalance.balance : token.balance;
           const formatBalance = formatValue(balance, decimal);
           const canEdit = !(data.receivers.length > 0);
-          return <div key={index}>
-
-            <div className="transfer-line">
-              {isBsv ? `Coin: ${tokenSymbol}` : `Token: ${tokenSymbol}`}
-            </div>
-            {!isBsv && (
-              <div className="transfer-line">Genesis: {token.genesis}</div>
-            )}
-            {!isBsv && (
-              <div className="transfer-line">Codehash: {token.codehash}</div>
-            )}
-            <Row justify="space-between" style={{ margin: "10px 0" }}>
-              <Col span={14}>
-                <div style={{ fontWeight: 700 }}>Input</div>
-              </Col>
-            </Row>
-            <div className="transfer-line">{`Balance: ${formatBalance}`}</div>
-            <div className="transfer-line">{`From Address: ${key.address}`}</div>
-            <Row justify="space-between" style={{ margin: "10px 0" }}>
-              <Col span={14}>
-                <div style={{ fontWeight: 700 }}>Output</div>
-              </Col>
-            </Row>
-            <Form.List name={`receiverList${index}`}>
-              {(fields, { add, remove }) => (
-                <>
-                  {fields.map((key, name, fieldKey, ...restField) => {
-                    return (
-                      <Space
-                        key={key.fieldKey}
-                        style={{ display: "flex", marginBottom: 8 }}
-                        align="baseline"
-                      >
-                        <Form.Item
-                          {...restField}
-                          name={[name, "address"]}
-                          fieldKey={[fieldKey, "address"]}
-                          rules={[
-                            {
-                              required: true,
-                              message: "Please input the address",
-                            },
-                            {
-                              message: "invalid address",
-                              validator: (_, value) =>
-                                isValidAddress(account.network, value)
-                                  ? Promise.resolve()
-                                  : Promise.reject(),
-                            },
-                          ]}
-                        >
-                          <Input
-                            placeholder="Input the address"
-                            disabled={!canEdit}
-                          />
-                        </Form.Item>
-                        <Form.Item
-                          {...restField}
-                          name={[name, "amount"]}
-                          fieldKey={[fieldKey, "amount"]}
-                          rules={[
-                            { required: true, message: "Please input amount" },
-                          ]}
-                        >
-                          <InputNumber
-                            placeholder="Amount"
-                            min={0}
-                            disabled={!canEdit}
-                          />
-                        </Form.Item>
-                        <Button
-                          disabled={!canEdit}
-                          size="small"
-                          onClick={() => remove(name)}
-                          shape="circle"
-                          icon={<MinusOutlined />}
-                        />
-                      </Space>
-                    );
-                  })}
-
-                  <Form.Item>
-                    <Button
-                      type="dashed"
-                      onClick={() => add()}
-                      icon={<PlusOutlined />}
-                      disabled={!canEdit}
-                    >
-                      Add Output
-                </Button>
-                  </Form.Item>
-                </>
+          return (
+            <div key={index}>
+              <div className="transfer-line">
+                {isBsv ? `Coin: ${tokenSymbol}` : `Token: ${tokenSymbol}`}
+              </div>
+              {!isBsv && (
+                <div className="transfer-line">Genesis: {token.genesis}</div>
               )}
-            </Form.List>
+              {!isBsv && (
+                <div className="transfer-line">Codehash: {token.codehash}</div>
+              )}
+              <Row justify="space-between" style={{ margin: "10px 0" }}>
+                <Col span={14}>
+                  <div style={{ fontWeight: 700 }}>Input</div>
+                </Col>
+              </Row>
+              <div className="transfer-line">{`Balance: ${formatBalance}`}</div>
+              <div className="transfer-line">{`From Address: ${key.address}`}</div>
+              <Row justify="space-between" style={{ margin: "10px 0" }}>
+                <Col span={14}>
+                  <div style={{ fontWeight: 700 }}>Output</div>
+                </Col>
+              </Row>
+              <Form.List name={`receiverList${index}`}>
+                {(fields, { add, remove }) => (
+                  <>
+                    {fields.map((key, name, fieldKey, ...restField) => {
+                      return (
+                        <Space
+                          key={key.fieldKey}
+                          style={{ display: "flex", marginBottom: 8 }}
+                          align="baseline"
+                        >
+                          <Form.Item
+                            {...restField}
+                            name={[name, "address"]}
+                            fieldKey={[fieldKey, "address"]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please input the address",
+                              },
+                              {
+                                message: "invalid address",
+                                validator: (_, value) =>
+                                  isValidAddress(account.network, value)
+                                    ? Promise.resolve()
+                                    : Promise.reject(),
+                              },
+                            ]}
+                          >
+                            <Input
+                              placeholder="Input the address"
+                              disabled={!canEdit}
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            {...restField}
+                            name={[name, "amount"]}
+                            fieldKey={[fieldKey, "amount"]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please input amount",
+                              },
+                            ]}
+                          >
+                            <InputNumber
+                              placeholder="Amount"
+                              min={0}
+                              disabled={!canEdit}
+                            />
+                          </Form.Item>
+                          <Button
+                            disabled={!canEdit}
+                            size="small"
+                            onClick={() => remove(name)}
+                            shape="circle"
+                            icon={<MinusOutlined />}
+                          />
+                        </Space>
+                      );
+                    })}
 
-          </div>
+                    <Form.Item>
+                      <Button
+                        type="dashed"
+                        onClick={() => add()}
+                        icon={<PlusOutlined />}
+                        disabled={!canEdit}
+                      >
+                        Add Output
+                      </Button>
+                    </Form.Item>
+                  </>
+                )}
+              </Form.List>
+            </div>
+          );
         })}
         <Form.Item>
           <Button type="primary" htmlType="submit" block>
@@ -666,7 +680,6 @@ function TransferAllPanel({
       </Form>
     </Card>
   );
-
 }
 
 function TransferPanel({
@@ -707,8 +720,6 @@ function TransferPanel({
         };
       }),
     });
-
-
   }, key && bsvBalance && initReceivers.length);
 
   if (!key) {
@@ -731,8 +742,6 @@ function TransferPanel({
   const decimal = isBsv ? 8 : token.tokenDecimal;
   const balance = isBsv ? bsvBalance.balance : token.balance;
   const formatBalance = formatValue(balance, decimal);
-
-
 
   const handleSubmit = async () => {
     const { receiverList } = form.getFieldsValue();
@@ -1058,7 +1067,7 @@ function App() {
   const [sensibleFtList] = useGlobalState("sensibleFtList");
   const [initReceivers, setInitReceivers] = useState([]);
   const [initDatas, setInitDatas] = useState([]);
-  const [initRabins, setRabins] = useState([])
+  const [initRabins, setRabins] = useState([]);
 
   const handleTransfer = (genesis) => {
     setTransfering(true);
@@ -1081,7 +1090,7 @@ function App() {
           return data;
         }
       }
-    } catch (err) { }
+    } catch (err) {}
     return null;
   };
   const handlePopResponseCallback = (resObj) => {
@@ -1198,7 +1207,7 @@ function App() {
       return;
     }
     // balance check
-    params.datas.forEach(item => {
+    params.datas.forEach((item) => {
       // balance check
       const isBsv = !item.genesis;
       const ft = sensibleFtList.find((v) => v.genesis === item.genesis);
@@ -1218,7 +1227,7 @@ function App() {
       setTransfering(true);
       // console.log(params.datas);
       setInitDatas(params.datas);
-    })
+    });
   }, !!transferBsvCondition);
   useEffect(() => {
     const obu = window.onbeforeunload;
@@ -1232,21 +1241,22 @@ function App() {
       <Header accountName="harry" />
       <LoginPanel />
       {!trasfering && <AccountInfoPanel onTransfer={handleTransfer} />}
-      {trasfering && (
-        (!initDatas || initDatas.length < 1) ? <TransferPanel
-          genesis={trasferSensibleFtGenesis}
-          rabinApis={initRabins}
-          onCancel={handleCancelTransfer}
-          onTransferCallback={handlePopResponseCallback}
-          initReceivers={initReceivers}
-        />
-          :
+      {trasfering &&
+        (!initDatas || initDatas.length < 1 ? (
+          <TransferPanel
+            genesis={trasferSensibleFtGenesis}
+            rabinApis={initRabins}
+            onCancel={handleCancelTransfer}
+            onTransferCallback={handlePopResponseCallback}
+            initReceivers={initReceivers}
+          />
+        ) : (
           <TransferAllPanel
             onCancel={handleCancelTransfer}
             onTransferCallback={handlePopResponseCallback}
             initDatas={initDatas}
           />
-      )}
+        ))}
     </div>
   );
 }
