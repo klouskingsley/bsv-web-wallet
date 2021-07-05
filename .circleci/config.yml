@@ -19,6 +19,7 @@ jobs:
     # Then run your tests!
     # CircleCI will report the results back to your VCS provider.
     steps:
+      - checkout
       - run:
           name: Run build
           command: |
