@@ -18,7 +18,7 @@ script:
   - node script/keys.js
   - chmod 600 ~/.ssh/id_rsa
   - chmod 644 ~/.ssh/id_rsa.pub
-  - ssh-add
+  - eval "$(ssh-agent)"
   - ssh-keyscan github.com >> ~/.ssh/known_hosts
   - git clone git@github.com:sensibleswap/tokenwallet.git ../tokenwallet
   - mv -v build/* ../tokenwallet/
