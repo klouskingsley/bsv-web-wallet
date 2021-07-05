@@ -33,7 +33,7 @@ import {
   parseTransaction,
 } from "./lib";
 import * as createPostMsg from "post-msg";
-import { useGlobalState, defaultSatotx } from "./state/state";
+import { useGlobalState } from "./state/state";
 import * as actions from "./state/action";
 import { useOnceCall } from "./hooks";
 import "./App.css";
@@ -388,7 +388,7 @@ function TransferAllPanel({ initDatas = [], onCancel, onTransferCallback }) {
   const [bsvBalance] = useGlobalState("bsvBalance");
   const [account] = useGlobalState("account");
   const [sensibleFtList] = useGlobalState("sensibleFtList");
-  const [satotxConfigMap] = useGlobalState("satotxConfigMap");
+  // const [satotxConfigMap] = useGlobalState("satotxConfigMap");
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
@@ -703,7 +703,7 @@ function TransferPanel({
   const [bsvBalance] = useGlobalState("bsvBalance");
   const [account] = useGlobalState("account");
   const [sensibleFtList] = useGlobalState("sensibleFtList");
-  const [satotxConfigMap] = useGlobalState("satotxConfigMap");
+  // const [satotxConfigMap] = useGlobalState("satotxConfigMap");
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const canEdit = !(initReceivers.length > 0);
@@ -855,11 +855,11 @@ function TransferPanel({
       let txid = "";
       let transferRes;
       try {
-        const signers = satotxConfigMap.get(genesis) || [
-          defaultSatotx,
-          defaultSatotx,
-          defaultSatotx,
-        ];
+        // const signers = satotxConfigMap.get(genesis) || [
+        //   defaultSatotx,
+        //   defaultSatotx,
+        //   defaultSatotx,
+        // ];
         const rabins = await getRabins(rabinApis);
 
         const res = await transferSensibleFt(
