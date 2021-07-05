@@ -72,41 +72,41 @@
       "https://satotx.tswap.io"
     ];
     
-    bsv.transferSensibleFt({
-      codehash: "514776383faa66e4a65808904d4d6724e4774fbe",
-      genesis:
-        "b0f7131b4b72a5b90910c008c041e24a71524e6d",
-      receivers: [
-        {
-          address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
-          amount: "4000000000",
-        },
-      ],
-      // rabinApis,
-    }).then(res => {
-      console.log(res)
-    });
-
-    // bsv.transferAll([{
-    //     receivers: [{
-    //         address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
-    //         amount: 102692,
-    //       },
-
-    //     ]
-    //   },
-    //   {
-    //     receivers: [{
+    // bsv.transferSensibleFt({
+    //   codehash: "514776383faa66e4a65808904d4d6724e4774fbe",
+    //   genesis:
+    //     "b0f7131b4b72a5b90910c008c041e24a71524e6d",
+    //   receivers: [
+    //     {
     //       address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
-    //       amount: "100000000",
-    //     }, ],
-    //     codehash: "514776383faa66e4a65808904d4d6724e4774fbe",
-    //     genesis: "b0f7131b4b72a5b90910c008c041e24a71524e6d",
-    //     // rabinApis
-    //   },
-    // ]).then((res) =>
-    //   console.log("transferAll", res)
-    // );
+    //       amount: "4000000000",
+    //     },
+    //   ],
+    //   // rabinApis,
+    // }).then(res => {
+    //   console.log(res)
+    // });
+
+    bsv.transferAll([{
+        receivers: [{
+            address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
+            amount: 102692,
+          },
+
+        ]
+      },
+      {
+        receivers: [{
+          address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
+          amount: "1000000",
+        }, ],
+        codehash: "514776383faa66e4a65808904d4d6724e4774fbe",
+        genesis: "413b999e1c80bb1eeb0760e894336737b08059b3",
+        // rabinApis
+      },
+    ]).then((res) =>
+      console.log("transferAll", res)
+    );
   </script>
 </body>
 

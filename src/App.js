@@ -533,7 +533,7 @@ function TransferAllPanel({ initDatas = [], onCancel, onTransferCallback }) {
             });
         transferRes.push(res);
         if(i < initDatas.length - 1) {
-          await sleep(1000);
+          await sleep(2000);
         }
       }
 
