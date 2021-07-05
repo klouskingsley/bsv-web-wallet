@@ -262,8 +262,8 @@ const mapBsvFeeError = (err: Error) => {
     return err
 }
 export async function transferSensibleFt(network: NetWork, signers: SensibleSatotx[], senderWif: string, receivers: TransferReceiver[], codehash: string, genesis: string, ){
-    // const selectRes = signers && signers.length > 0 ? await SensibleFT.selectSigners(signers) : await SensibleFT.selectSigners();
-    const selectRes = await SensibleFT.selectSigners();
+    const selectRes = signers && signers.length > 0 ? await SensibleFT.selectSigners(signers) : await SensibleFT.selectSigners();
+    // const selectRes = await SensibleFT.selectSigners();
 
     const ft = new SensibleFT({
         network: network as any,
