@@ -457,11 +457,11 @@ function TransferAllPanel({ initDatas = [], onCancel, onTransferCallback }) {
       setLoading(true);
       let transferRes;
       try {
-        const signers = satotxConfigMap.get(genesis) || [
-          defaultSatotx,
-          defaultSatotx,
-          defaultSatotx,
-        ];
+        // const signers = satotxConfigMap.get(genesis) || [
+        //   defaultSatotx,
+        //   defaultSatotx,
+        //   defaultSatotx,
+        // ];
 
         const rabins = await getRabins(rabinApis);
         const res = await transferSensibleFt(
