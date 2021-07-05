@@ -28,7 +28,18 @@ const transferFtTres = await bsv.transferSensibleFt({
   receivers: [{ address: "xxx", amount: 344 }],
   codehash: "codehash",
   genesis: "genesis",
+  rabinApis: [
+    "https://s1.satoplay.com"
+]
 });
+const transferAll = await bsv.transferAll([{
+    receivers: [{ address: "xxx", amount: 344 }],
+  codehash: "codehash",
+  genesis: "genesis",
+  rabinApis: [
+    "https://s1.satoplay.com"
+]
+}])
 ```
 
 ## api
@@ -79,9 +90,21 @@ interface Receiver {
 }
 ```
 
-### bsv.transferSensibleFt({receivers: Array<Receiver>, codehash: string, genesis: string}): Promise<{txid: string}>
+### bsv.transferSensibleFt({receivers: Array<Receiver>, codehash: string, genesis: string, rabinApis: Array<String>}): Promise<{txid: string}>
 
 sensible ft 转账
+
+```ts
+interface Receiver {
+  address: string;
+  amount: number;
+}
+```
+
+
+### bsv.transferAll([{receivers: Array<Receiver>, codehash: string, genesis: string, rabinApis: Array<String>}): Promise<{txid: string}]>
+
+bsv 和 sensible ft 混合转账
 
 ```ts
 interface Receiver {
