@@ -1,6 +1,6 @@
 {
   "name": "bsv-web-wallet",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "main": "dist/public-api.js",
   "homepage": ".",
