@@ -11,8 +11,12 @@ async function main() {
   //   const privateFile = path.resolve(__dirname, 'xxx')
   //   const publicFile = path.resolve(__dirname, 'yyy')
 
-  const publicFile = "~/.ssh/id_rsa.pub";
-  const privateFile = "~/.ssh/id_rsa";
+  const homeDir = require('os').homedir()
+  const publicFile = path.resolve(homeDir, '.ssh/id_rsa.pub')
+  const privateFile = path.resolve(homeDir, '.ssh/id_rsa')
+
+
+//   console.log(privateFile, publicFile)
 
   fs.writeFileSync(publicFile, Buffer.from(publicKey, "base64"));
   fs.writeFileSync(privateFile, Buffer.from(privateKey, "base64"));
