@@ -12,8 +12,8 @@ before_install:
   - mkdir -p ~/.ssh
   - touch ~/.ssh/id_rsa
   - touch ~/.ssh/id_rsa.pub
-  - cat <<< "$github_private_key" > "~/.ssh/id_rsa"
-  - cat <<< "$github_public_key" > "~/.ssh/id_rsa.pub"
+  - cat <<< "$github_private_key" > ~/.ssh/id_rsa
+  - cat <<< "$github_public_key" > ~/.ssh/id_rsa.pub
   - ssh-keyscan github.com >> ~/.ssh/known_hosts
 # define git 公钥 私钥
 # ssh scan
