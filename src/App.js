@@ -388,7 +388,6 @@ function TransferAllPanel({ initDatas = [], onCancel, onTransferCallback }) {
   const [bsvBalance] = useGlobalState("bsvBalance");
   const [account] = useGlobalState("account");
   const [sensibleFtList] = useGlobalState("sensibleFtList");
-  const [satotxConfigMap] = useGlobalState("satotxConfigMap");
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
@@ -457,11 +456,6 @@ function TransferAllPanel({ initDatas = [], onCancel, onTransferCallback }) {
       setLoading(true);
       let transferRes;
       try {
-        const signers = satotxConfigMap.get(genesis) || [
-          defaultSatotx,
-          defaultSatotx,
-          defaultSatotx,
-        ];
 
         const rabins = await getRabins(rabinApis);
         const res = await transferSensibleFt(
@@ -703,7 +697,6 @@ function TransferPanel({
   const [bsvBalance] = useGlobalState("bsvBalance");
   const [account] = useGlobalState("account");
   const [sensibleFtList] = useGlobalState("sensibleFtList");
-  const [satotxConfigMap] = useGlobalState("satotxConfigMap");
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const canEdit = !(initReceivers.length > 0);
@@ -855,11 +848,6 @@ function TransferPanel({
       let txid = "";
       let transferRes;
       try {
-        const signers = satotxConfigMap.get(genesis) || [
-          defaultSatotx,
-          defaultSatotx,
-          defaultSatotx,
-        ];
         const rabins = await getRabins(rabinApis);
 
         const res = await transferSensibleFt(
