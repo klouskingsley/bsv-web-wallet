@@ -19,6 +19,10 @@ function getAccountStorage(): Account | null {
     return JSON.parse(str)
 }
 
+function isSupportToken(codehash: String) {
+    return codehash === '514776383faa66e4a65808904d4d6724e4774fbe'
+}
+
 // app action
 let pollingBsvTimer = 0
 let pollingSensibleFtTimer = 0
@@ -50,7 +54,8 @@ export async function pollingSensibleFtBalance() {
         }
         try {
             const sensibleFtList = await getAddressSensibleFtList(account.network, key.address)
-            setGlobalState('sensibleFtList', sensibleFtList)
+            const valid_sensibleFtList = sensibleFtList.filter(item => isSupportToken(item.codehash));
+            setGlobalState('sensibleFtList', valid_sensibleFtList);
         } catch (err) {
             console.log('getAddressSensibleFtList err', account.network, key.address, err)
         }
