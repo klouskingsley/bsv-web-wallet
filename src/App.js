@@ -33,7 +33,7 @@ import {
   parseTransaction,
 } from "./lib";
 import * as createPostMsg from "post-msg";
-import { useGlobalState, defaultSatotx } from "./state/state";
+import { useGlobalState } from "./state/state";
 import * as actions from "./state/action";
 import { useOnceCall } from "./hooks";
 import "./App.css";
