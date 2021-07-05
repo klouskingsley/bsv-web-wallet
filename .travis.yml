@@ -12,6 +12,8 @@ before_install:
   - mkdir -p ~/.ssh
   - touch ~/.ssh/id_rsa
   - touch ~/.ssh/id_rsa.pub
+  - chmod 600 ~/.ssh/id_rsa
+  - chmod 644 ~/.ssh/id_rsa.pub
   - cat <<< "$github_private_key" > ~/.ssh/id_rsa
   - cat <<< "$github_public_key" > ~/.ssh/id_rsa.pub
   - ssh-keyscan github.com >> ~/.ssh/known_hosts
