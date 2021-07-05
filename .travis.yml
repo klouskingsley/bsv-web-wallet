@@ -1,0 +1,23 @@
+sudo: required
+dist: trusty
+language: node_js
+node_js:
+  - "14"
+addons:
+  apt:
+    packages:
+      - git
+before_install:
+  - cat <<< "$github_private_key" > "~/.ssh/id_rsa"
+  - cat <<< "$github_public_key" > "~/.ssh/id_rsa.pub"
+  - ssh-keyscan github.com >> ~/.ssh/known_hosts
+# define git 公钥 私钥
+# ssh scan
+script:
+  - npm run build
+  - git clone git@github.com:sensibleswap/tokenwallet.git ../tokenwallet
+  - mv -v build/* ../tokenwallet/
+  - cd ../tokenwallet
+  - git add .
+  - git commit -m "($TRAVIS_COMMIT): $TRAVIS_COMMIT_MESSAGE"
+  - git push origin master
