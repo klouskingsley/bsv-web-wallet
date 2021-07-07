@@ -242,6 +242,7 @@ export async function getSensibleAddressUrl(network: NetWork, address: string, c
 // 广播交易
 export async function broadcastSensibleQeury(network: NetWork, rawtx: string) {
     const apiPrefx = getSensibleApiPrefix(network)
+    console.log('sensible 交易广播', network, rawtx)
     const {data} = await axios.post(`${apiPrefx}/pushtx`, {
         txHex: rawtx,
     })
@@ -295,7 +296,7 @@ export async function transferSensibleFt(network: NetWork, signers: SensibleSato
             "The count of utxos should not be more than 3 in transfer"
           ) > 0;
         let isFtUtxoAmountExceed = errMsg.indexOf('Too many token-utxos') > 0;
-        console.log("broadcast sensible ft error ");
+        console.log("broadcast sensible ft error");
         console.error(err);
 
         if (!isBsvAmountExceed && !isFtUtxoAmountExceed) {

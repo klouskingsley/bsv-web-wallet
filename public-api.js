@@ -180,21 +180,26 @@ function Bsv({
       receivers,
     });
   };
-  const transferSensibleFt = function ({ receivers, codehash, genesis }) {
+  const transferSensibleFt = function ({
+    receivers,
+    codehash,
+    genesis,
+    rabinApis,
+  }) {
     // 交易成功 resolve  获取资产余额 是否变更
     // 交易失败 reject
     return openPopupAndRequest("transferSensibleFt", {
       receivers,
       codehash,
       genesis,
-      rabinApis
+      rabinApis,
     });
   };
   const transferAll = function (datas) {
     return openPopupAndRequest("transferAll", {
-      datas
-    })
-  }
+      datas,
+    });
+  };
 
   return {
     requestAccount,
