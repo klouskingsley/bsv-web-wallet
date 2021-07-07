@@ -33,14 +33,15 @@ import {
   parseTransaction,
 } from "./lib";
 import * as createPostMsg from "post-msg";
-import { useGlobalState, defaultSatotx } from "./state/state";
+import { useGlobalState } from "./state/state";
 import * as actions from "./state/action";
 import { useOnceCall } from "./hooks";
 import "./App.css";
 import * as util from "./lib/util";
 import * as Sentry from "@sentry/react";
-// import axios from 'axios';
+import axios from 'axios';
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const { Option } = Select;
 
 function Header() {
@@ -357,37 +358,36 @@ function AccountInfoPanel({ onWithDraw, onTransfer }) {
   ];
 }
 
-// function getRabinPubKeys(url) {
-//   return axios.get(url);
-// }
+function getRabinPubKeys(url) {
+  return axios.get(url);
+}
 
-// async function getRabins(rabinApis) {
-//   let promises = [], rabins = [];
-//   rabinApis.forEach(rabinApi => {
-//     promises.push(getRabinPubKeys(rabinApi));
-//   })
-//   return new Promise(resolve => {
-//     axios.all(promises).then(res => {
-//       // console.log(res);
-//       res.forEach((item, index) => {
-//         rabins.push({
-//           rabinApis: rabinApis[index],
-//           rabinPubKeys: BigInt('0x' + item.data.data.pubKey)
-//         })
-//       })
+async function getRabins(rabinApis = []) {
+  let promises = [], rabins = [];
+  rabinApis.forEach(rabinApi => {
+    promises.push(getRabinPubKeys(rabinApi));
+  })
+  return new Promise(resolve => {
+    axios.all(promises).then(res => {
+      // console.log(res);
+      res.forEach((item, index) => {
+        rabins.push({
+          satotxApiPrefix: rabinApis[index],
+          satotxPubKey: item.data.data.pubKey
+        })
+      })
 
-//       resolve(rabins);
-//     })
-//   })
+      resolve(rabins);
+    })
+  })
 
-// }
+}
 
 function TransferAllPanel({ initDatas = [], onCancel, onTransferCallback }) {
   const [key] = useGlobalState("key");
   const [bsvBalance] = useGlobalState("bsvBalance");
   const [account] = useGlobalState("account");
   const [sensibleFtList] = useGlobalState("sensibleFtList");
-  const [satotxConfigMap] = useGlobalState("satotxConfigMap");
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
@@ -451,18 +451,17 @@ function TransferAllPanel({ initDatas = [], onCancel, onTransferCallback }) {
       token,
       decimal,
       genesis,
+      rabinApis
     }) => {
       setLoading(true);
       let transferRes;
       try {
-        const signers = satotxConfigMap.get(genesis) || [
-          defaultSatotx,
-          defaultSatotx,
-          defaultSatotx,
-        ];
+
+        const rabins = await getRabins(rabinApis);
         const res = await transferSensibleFt(
           account.network,
-          signers,
+          // signers,
+          rabins,
           key.privateKey,
           formatReceiverList,
           token.codehash,
@@ -494,6 +493,7 @@ function TransferAllPanel({ initDatas = [], onCancel, onTransferCallback }) {
         );
         const decimal = isBsv ? 8 : token.tokenDecimal;
         const balance = isBsv ? bsvBalance.balance : token.balance;
+        const rabinApis = data.rabinApis;
         const totalOutputValueFloatDuck = receiverLists[
           `receiverList${i}`
         ].reduce((prev, cur) => util.plus(prev, cur.amount), 0);
@@ -523,8 +523,12 @@ function TransferAllPanel({ initDatas = [], onCancel, onTransferCallback }) {
               token,
               decimal,
               genesis: data.genesis,
+              rabinApis
             });
         transferRes.push(res);
+        if(i < initDatas.length - 1) {
+          await sleep(2000);
+        }
       }
 
       setLoading(false);
@@ -693,7 +697,6 @@ function TransferPanel({
   const [bsvBalance] = useGlobalState("bsvBalance");
   const [account] = useGlobalState("account");
   const [sensibleFtList] = useGlobalState("sensibleFtList");
-  const [satotxConfigMap] = useGlobalState("satotxConfigMap");
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const canEdit = !(initReceivers.length > 0);
@@ -845,17 +848,12 @@ function TransferPanel({
       let txid = "";
       let transferRes;
       try {
-        const signers = satotxConfigMap.get(genesis) || [
-          defaultSatotx,
-          defaultSatotx,
-          defaultSatotx,
-        ];
-        // const rabins = await getRabins(rabinApis);
+        const rabins = await getRabins(rabinApis);
 
         const res = await transferSensibleFt(
           account.network,
-          signers,
-          // rabins,
+          // signers,
+          rabins,
           key.privateKey,
           formatReceiverList,
           token.codehash,

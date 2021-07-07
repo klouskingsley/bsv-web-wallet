@@ -42,49 +42,90 @@
       //     });
       //   });
 
-      // bsv.transferBsv({
-      //     receivers: [
-      //       {
-      //         address: "mg4YnKJGgwqCUWd7Kf8g9r5Pr5Zs6KR8BV",
-      //         amount: 10057266,
-      //       },
-      //     ],
-      //   })
-      //   .then((res) => console.log("transferBsvRes", res));
-      bsv.transferSensibleFt({
-        codehash: "514776383faa66e4a65808904d4d6724e4774fbe",
-        genesis:
-          "8c6f937287767a56611cc01defd0427742776e09",
-        receivers: [
-          {
-            address: "mg4YnKJGgwqCUWd7Kf8g9r5Pr5Zs6KR8BV",
-            amount: "410000",
+    console.log("getAccount");
+    // bsv
+    //   .getAccount()
+    //   .then((res) => {
+    //     console.log("getAccount", res);
+    //   })
+    //   .then(() => {
+    //     bsv.requestAccount().then((res) => {
+    //       console.log("requestAccount", res);
+    //     });
+    //   });
+
+    // bsv.transferBsv({
+    //     receivers: [
+    //       {
+    //         address: "mg4YnKJGgwqCUWd7Kf8g9r5Pr5Zs6KR8BV",
+    //         amount: 10057266,
+    //       },
+    //     ],
+    //   })
+    //   .then((res) => console.log("transferBsvRes", res));
+    // bsv.transferSensibleFt({
+    //   codehash: "b214af02de5757f9a512f70c5ff286be54780c59",
+    //   genesis:
+    //     "6294c9a192c3c10fb242fe67ab2233a33a8cf4709219a17de3e838a66e3fa75100000000",
+    //   receivers: [
+    //     {
+    //       address: "mg4YnKJGgwqCUWd7Kf8g9r5Pr5Zs6KR8BV",
+    //       amount: "4000000000",
+    //     },
+    //   ],
+    // });
+
+    const rabinApis = [
+      "https://s1.satoplay.com",
+      "https://satotx.showpay.top",
+      "https://satotx.volt.id",
+      "https://satotx.metasv.com",
+      "https://satotx.tswap.io"
+    ];
+//     const rabinApis = [
+// "https://satotx.showpay.top",
+// "https://satotx2.showpay.top",
+// "https://satotx3.showpay.top",
+// "https://s1.satoplay.com",
+// "https://satotx.metasv.com"
+// ];
+    
+    // bsv.transferSensibleFt({
+    //   codehash: "514776383faa66e4a65808904d4d6724e4774fbe",
+    //   genesis:
+    //     "b0f7131b4b72a5b90910c008c041e24a71524e6d",
+    //   receivers: [
+    //     {
+    //       address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
+    //       amount: "4000000000",
+    //     },
+    //   ],
+    //   // rabinApis,
+    // }).then(res => {
+    //   console.log(res)
+    // });
+
+    bsv.transferAll([{
+        receivers: [{
+            address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
+            amount: 102692,
           },
         ],
-      });
-
-      // const rabinApis = [
-      //   "https://s1.satoplay.com",
-      //   "https://satotx.showpay.top",
-      //   "https://satotx.volt.id",
-      //   "https://satotx.metasv.com",
-      //   "https://satotx.tswap.io"
-      // ];
-
-      // bsv.transferSensibleFt({
-      //   codehash: "514776383faa66e4a65808904d4d6724e4774fbe",
-      //   genesis:
-      //     "b0f7131b4b72a5b90910c008c041e24a71524e6d",
-      //   receivers: [
-      //     {
-      //       address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
-      //       amount: "4000000000",
-      //     },
-      //   ],
-      //   rabinApis,
-      // }).then(res => {
-      //   console.log(res)
-      // });
+      },
+      {
+        receivers: [{
+          address: "moCjrEtWgo2vz8ZrPqmFa3Mqm6tzqetFM3",
+          amount: "1000000",
+        }, ],
+        codehash: "514776383faa66e4a65808904d4d6724e4774fbe",
+        genesis: "413b999e1c80bb1eeb0760e894336737b08059b3",
+        rabinApis
+      },
+    ]).then((res) =>
+      console.log("transferAll", res)
+    );
+  </script>
+</body>
 
       // bsv
       //   .transferAll([
